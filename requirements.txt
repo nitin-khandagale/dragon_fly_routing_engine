@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+h3
+shapely
+geopandas
+pandas
+numpy
+requests
+pydantic
