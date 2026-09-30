@@ -1,0 +1,14 @@
+{
+  "name": "sf_open_area",
+  "description": "Shorter test route; adjust coordinates as needed.",
+  "request": {
+    "start_lat": 37.79448372,
+    "start_lon": -122.40547051,
+    "goal_lat": 37.79498372,
+    "goal_lon": -122.40497051,
+    "start_altitude_meters": 0,
+    "goal_altitude_meters": 0,
+    "minimum_transit_altitude_meters": 30,
+    "max_altitude_meters": 300
+  }
+}

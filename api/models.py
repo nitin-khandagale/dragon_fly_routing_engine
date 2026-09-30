@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+from typing import Literal
 
 
 LAYER_HEIGHT_METERS = 15.0
@@ -35,3 +36,6 @@ class RouteRequest(BaseModel):
         ge=LAYER_HEIGHT_METERS,
         le=MAX_ALTITUDE_METERS,
     )
+
+    objective: Literal["distance", "energy"] = "distance"
+    vehicle_profile: Literal["default_multirotor"] = "default_multirotor"

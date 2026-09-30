@@ -1,0 +1,636 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+    <Document>
+        <name>sf_baseline</name>
+
+        <Style id="route">
+            <LineStyle>
+                <width>4</width>
+            </LineStyle>
+        </Style>
+
+        <Placemark>
+            <name>DragonFly Route</name>
+            <styleUrl>#route</styleUrl>
+            <LineString>
+                <altitudeMode>absolute</altitudeMode>
+                <tessellate>1</tessellate>
+                <coordinates>
+                    -122.40547051,37.79448372,0.0
+-122.40546613196496,37.79461654297731,0.0
+-122.40546613196496,37.79461654297731,15.0
+-122.40546613196496,37.79461654297731,30.0
+-122.40546613196496,37.79461654297731,45.0
+-122.40546613196496,37.79461654297731,60.0
+-122.40543928326817,37.79416126957919,75.0
+-122.40541243480195,37.793705994474436,90.0
+-122.40489939406582,37.793516492580004,105.0
+-122.40438635349935,37.79332698755149,120.0
+-122.40387331310262,37.793137479388854,120.0
+-122.40336027287572,37.79294796809215,120.0
+-122.40284723281877,37.792758453661364,120.0
+-122.4023341929318,37.79256893609651,120.0
+-122.40182115321493,37.79237941539759,120.0
+-122.4013081136682,37.79218989156466,120.0
+-122.40079507429174,37.79200036459768,120.0
+-122.40028203508558,37.79181083449668,120.0
+-122.39976899604984,37.791621301261685,120.0
+-122.3992559571846,37.791431764892685,120.0
+-122.39874291848993,37.791242225389695,120.0
+-122.39871609895549,37.79078692826443,120.0
+-122.39820306263928,37.790597384065066,120.0
+-122.39817624554297,37.79014208367112,120.0
+-122.398149428677,37.7896867815709,120.0
+-122.39763639694708,37.78949723111292,120.0
+-122.39712336538801,37.78930767752107,120.0
+-122.39661033399982,37.78911812079539,120.0
+-122.39612411081754,37.78938386928522,120.0
+-122.39561107756364,37.78919430785406,120.0
+-122.3950980444809,37.78900474328908,120.0
+-122.39458501156945,37.78881517559022,120.0
+-122.39407197882927,37.78862560475758,120.0
+-122.3935589462605,37.7884360307911,120.0
+-122.3930459138632,37.78824645369083,120.0
+-122.3925328816375,37.78805687345676,120.0
+-122.39201984958345,37.787867290088904,120.0
+-122.39150681770109,37.78767770358731,120.0
+-122.39099378599059,37.78748811395193,105.0
+-122.39099378599059,37.78748811395193,90.0
+-122.39099378599059,37.78748811395193,75.0
+-122.39048075445196,37.7872985211828,60.0
+-122.38996772308528,37.78710892527996,45.0
+-122.38945469189072,37.78691932624337,30.0
+-122.38945469189072,37.78691932624337,15.0
+-122.38945469189072,37.78691932624337,0.0
+-122.38931347,37.78695766,0.0
+                </coordinates>
+            </LineString>
+        </Placemark>
+
+        
+            <Placemark>
+                <name>Step 1 | 0.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.40547051,
+                        37.79448372,
+                        0.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 2 | 0.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.40546613196496,
+                        37.79461654297731,
+                        0.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 3 | 15.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.40546613196496,
+                        37.79461654297731,
+                        15.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 4 | 30.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.40546613196496,
+                        37.79461654297731,
+                        30.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 5 | 45.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.40546613196496,
+                        37.79461654297731,
+                        45.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 6 | 60.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.40546613196496,
+                        37.79461654297731,
+                        60.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 7 | 75.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.40543928326817,
+                        37.79416126957919,
+                        75.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 8 | 90.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.40541243480195,
+                        37.793705994474436,
+                        90.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 9 | 105.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.40489939406582,
+                        37.793516492580004,
+                        105.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 10 | 120.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.40438635349935,
+                        37.79332698755149,
+                        120.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 11 | 120.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.40387331310262,
+                        37.793137479388854,
+                        120.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 12 | 120.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.40336027287572,
+                        37.79294796809215,
+                        120.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 13 | 120.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.40284723281877,
+                        37.792758453661364,
+                        120.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 14 | 120.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.4023341929318,
+                        37.79256893609651,
+                        120.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 15 | 120.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.40182115321493,
+                        37.79237941539759,
+                        120.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 16 | 120.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.4013081136682,
+                        37.79218989156466,
+                        120.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 17 | 120.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.40079507429174,
+                        37.79200036459768,
+                        120.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 18 | 120.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.40028203508558,
+                        37.79181083449668,
+                        120.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 19 | 120.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.39976899604984,
+                        37.791621301261685,
+                        120.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 20 | 120.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.3992559571846,
+                        37.791431764892685,
+                        120.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 21 | 120.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.39874291848993,
+                        37.791242225389695,
+                        120.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 22 | 120.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.39871609895549,
+                        37.79078692826443,
+                        120.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 23 | 120.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.39820306263928,
+                        37.790597384065066,
+                        120.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 24 | 120.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.39817624554297,
+                        37.79014208367112,
+                        120.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 25 | 120.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.398149428677,
+                        37.7896867815709,
+                        120.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 26 | 120.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.39763639694708,
+                        37.78949723111292,
+                        120.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 27 | 120.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.39712336538801,
+                        37.78930767752107,
+                        120.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 28 | 120.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.39661033399982,
+                        37.78911812079539,
+                        120.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 29 | 120.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.39612411081754,
+                        37.78938386928522,
+                        120.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 30 | 120.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.39561107756364,
+                        37.78919430785406,
+                        120.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 31 | 120.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.3950980444809,
+                        37.78900474328908,
+                        120.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 32 | 120.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.39458501156945,
+                        37.78881517559022,
+                        120.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 33 | 120.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.39407197882927,
+                        37.78862560475758,
+                        120.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 34 | 120.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.3935589462605,
+                        37.7884360307911,
+                        120.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 35 | 120.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.3930459138632,
+                        37.78824645369083,
+                        120.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 36 | 120.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.3925328816375,
+                        37.78805687345676,
+                        120.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 37 | 120.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.39201984958345,
+                        37.787867290088904,
+                        120.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 38 | 120.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.39150681770109,
+                        37.78767770358731,
+                        120.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 39 | 105.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.39099378599059,
+                        37.78748811395193,
+                        105.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 40 | 90.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.39099378599059,
+                        37.78748811395193,
+                        90.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 41 | 75.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.39099378599059,
+                        37.78748811395193,
+                        75.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 42 | 60.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.39048075445196,
+                        37.7872985211828,
+                        60.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 43 | 45.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.38996772308528,
+                        37.78710892527996,
+                        45.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 44 | 30.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.38945469189072,
+                        37.78691932624337,
+                        30.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 45 | 15.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.38945469189072,
+                        37.78691932624337,
+                        15.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 46 | 0.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.38945469189072,
+                        37.78691932624337,
+                        0.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+            <Placemark>
+                <name>Step 47 | 0.0 m</name>
+                <Point>
+                    <altitudeMode>absolute</altitudeMode>
+                    <coordinates>
+                        -122.38931347,
+                        37.78695766,
+                        0.0
+                    </coordinates>
+                </Point>
+            </Placemark>
+            
+    </Document>
+</kml>

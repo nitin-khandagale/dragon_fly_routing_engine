@@ -6,8 +6,16 @@ from building_service.building_service import LocalBuildingService
 from weather_service.get_weather_data import LiveWeatherService
 from src.pathfinder import Pathfinder3D
 from src.utm_interfaces import EnvironmentalCostMap
+from engine.cost_models import DistanceCost, EnergyCost
+from engine.cost_models.distance import DistanceCost
+from engine.cost_models.energy import EnergyCost
+from engine.vehicle_profile import (
+    DEFAULT_MULTIROTOR,
+    VehicleProfile,
+)
 
 from api.models import RouteRequest
+from engine.route_metrics import RouteMetrics
 
 
 class RouteComputationError(Exception):
@@ -131,6 +139,27 @@ class RoutingEngine:
         candidates.sort(key=lambda item: item[0])
         return candidates[0][1]
 
+    def get_vehicle_profile(
+        self,
+        vehicle_profile_name: str,
+    ) -> VehicleProfile:
+        profiles = {
+            "default_multirotor": DEFAULT_MULTIROTOR,
+        }
+
+        vehicle = profiles.get(vehicle_profile_name)
+
+        if vehicle is None:
+            raise RouteComputationError(
+                status_code=422,
+                detail=(
+                    f"Unsupported vehicle profile: "
+                    f"{vehicle_profile_name}"
+                ),
+            )
+
+        return vehicle
+
     def compute_route(self, req: RouteRequest):
 
         # ========================================================
@@ -152,6 +181,31 @@ class RoutingEngine:
         minimum_transit_altitude_layer = self.meters_to_layer(
             req.minimum_transit_altitude_meters
         )
+
+        
+        objective = req.objective
+
+        vehicle = self.get_vehicle_profile(
+            req.vehicle_profile
+        )
+
+        if req.max_altitude_meters > vehicle.max_altitude_meters:
+            raise RouteComputationError(
+                status_code=422,
+                detail=(
+                    f"Requested maximum altitude "
+                    f"{req.max_altitude_meters:g} m exceeds "
+                    f"vehicle maximum altitude "
+                    f"{vehicle.max_altitude_meters:g} m."
+                ),
+            )
+
+        if objective == "energy":
+            cost_model = EnergyCost(
+                vehicle=vehicle
+            )
+        else:
+            cost_model = DistanceCost()
 
 
         # ========================================================
@@ -444,6 +498,7 @@ class RoutingEngine:
 
         engine = Pathfinder3D(
             cost_map=environment,
+            cost_model= cost_model,
 
             max_altitude_layer=(
                 max_altitude_layer
@@ -812,6 +867,11 @@ class RoutingEngine:
         ):
             waypoint["step"] = index
 
+        route_metrics = RouteMetrics.calculate(
+        waypoints=waypoints,
+        vehicle=vehicle,
+        )
+
 
         # ========================================================
         # 22. CONNECTOR INFORMATION
@@ -854,6 +914,13 @@ class RoutingEngine:
 
         return {
             "status": "success",
+            "objective": objective,
+            "vehicle": {
+                "profile": vehicle.name,
+                "battery_capacity_wh": vehicle.battery_capacity_wh,
+            },
+
+            "metrics": route_metrics,
 
             "altitude_layer_height_meters": (
                 self.LAYER_HEIGHT_METERS

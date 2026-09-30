@@ -3,7 +3,7 @@ import math
 from itertools import count
 
 import h3
-
+from engine.cost_models import CostModel, DistanceCost
 from src.utm_interfaces import EnvironmentalCostMap, Voxel3D
 
 
@@ -17,6 +17,7 @@ class Pathfinder3D:
         bounds=None,
         max_expansions: int = 50_000,
         edge_validator=None,
+        cost_model: CostModel | None = None,
     ):
         self.blocked = cost_map.blocked_voxels
         self.wind_costs = cost_map.wind_costs
@@ -28,6 +29,7 @@ class Pathfinder3D:
         self.max_expansions = max_expansions
 
         self.edge_validator = edge_validator
+        self.cost_model = cost_model or DistanceCost()
 
         # ====================================================
         # PHYSICAL COST MODEL
@@ -116,34 +118,30 @@ class Pathfinder3D:
     # HEURISTIC
     # ========================================================
 
-    def _heuristic(
-        self,
-        current: Voxel3D,
-        goal: Voxel3D,
-    ) -> float:
+    def _heuristic(self, current, goal) -> float:
+        current_hex, current_layer = current
+        goal_hex, goal_layer = goal
 
-        current_hex, current_alt = current
-        goal_hex, goal_alt = goal
+        horizontal_distance = self._horizontal_distance(
+            current_hex,
+            goal_hex,
+        )
 
-        horizontal_distance = (
-            self._horizontal_distance(
-                current_hex,
-                goal_hex,
-            )
+        current_altitude = (
+            current_layer * self.ALTITUDE_LAYER_HEIGHT_METERS
+        )
+
+        goal_altitude = (
+            goal_layer * self.ALTITUDE_LAYER_HEIGHT_METERS
         )
 
         altitude_difference = abs(
-            current_alt - goal_alt
+            goal_altitude - current_altitude
         )
 
-        vertical_distance = (
-            altitude_difference
-            * self.ALTITUDE_LAYER_HEIGHT_METERS
-        )
-
-        return (
-            horizontal_distance
-            + vertical_distance
+        return self.cost_model.heuristic(
+            horizontal_distance_meters=horizontal_distance,
+            altitude_change_meters=altitude_difference,
         )
 
 
@@ -244,11 +242,16 @@ class Pathfinder3D:
     # MOVEMENT COST
     # ========================================================
 
-    def _movement_cost(
-        self,
-        current: Voxel3D,
-        neighbor: Voxel3D,
-    ) -> float:
+    def _movement_cost(self, current, neighbor) -> float:
+        horizontal_distance = self._horizontal_distance(
+            current[0],
+            neighbor[0],
+        )
+
+        current_altitude = current[1] * self.ALTITUDE_LAYER_HEIGHT_METERS
+        neighbor_altitude = neighbor[1] * self.ALTITUDE_LAYER_HEIGHT_METERS
+
+        altitude_change = neighbor_altitude - current_altitude
 
         current_hex, current_alt = current
         neighbor_hex, neighbor_alt = neighbor
@@ -287,7 +290,10 @@ class Pathfinder3D:
                 * self.DESCENT_WEIGHT
             )
 
-        return cost
+        return self.cost_model.edge_cost(
+        horizontal_distance_meters=horizontal_distance,
+        altitude_change_meters=altitude_change,
+    )
 
 
     # ========================================================

@@ -1,0 +1,11 @@
+{
+  "status": "success",
+  "waypoints": 47,
+  "max_altitude_m": 120.0,
+  "total_climb_m": 120.0,
+  "total_descent_m": 120.0,
+  "horizontal_distance_m": 1826.219,
+  "3d_distance_m": 1963.834,
+  "energy_j": null,
+  "scenario": "sf_baseline"
+}

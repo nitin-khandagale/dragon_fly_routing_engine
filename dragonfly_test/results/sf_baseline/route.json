@@ -1,0 +1,439 @@
+{
+  "status": "success",
+  "objective": "distance",
+  "vehicle": {
+    "profile": "default_multirotor",
+    "battery_capacity_wh": 150.0
+  },
+  "metrics": {
+    "distance_meters": 1828.2727193347778,
+    "3d_distance_meters": 1965.8687604235697,
+    "total_climb_meters": 120.0,
+    "total_descent_meters": 120.0,
+    "flight_time_seconds": 302.82727193347773,
+    "energy_joules": 78706.81798336947,
+    "energy_wh": 21.86300499538041,
+    "battery_percent": 14.57533666358694
+  },
+  "altitude_layer_height_meters": 15.0,
+  "requested_altitudes_meters": {
+    "start": 0.0,
+    "goal": 0.0,
+    "maximum": 300.0,
+    "minimum_transit": 30.0
+  },
+  "safety": {
+    "horizontal_building_clearance_meters": 15.0,
+    "vertical_building_clearance_meters": 15.0,
+    "precise_edge_collision_check": true,
+    "exact_endpoint_collision_check": true,
+    "final_route_validation": true
+  },
+  "endpoint_connectors": {
+    "start": {
+      "requested": {
+        "latitude": 37.79448372,
+        "longitude": -122.40547051
+      },
+      "original_containing_h3": "8b283082a25dfff",
+      "selected_h3": "8b283082a25dfff",
+      "selected_h3_center": {
+        "latitude": 37.79461654297731,
+        "longitude": -122.40546613196496
+      },
+      "connector_distance_meters": 14.790868516896918
+    },
+    "goal": {
+      "requested": {
+        "latitude": 37.78695766,
+        "longitude": -122.38931347
+      },
+      "original_containing_h3": "8b283082a569fff",
+      "selected_h3": "8b283082a569fff",
+      "selected_h3_center": {
+        "latitude": 37.78691932624337,
+        "longitude": -122.38945469189072
+      },
+      "connector_distance_meters": 13.136505299315333
+    }
+  },
+  "total_waypoints": 47,
+  "waypoints": [
+    {
+      "step": 1,
+      "latitude": 37.79448372,
+      "longitude": -122.40547051,
+      "altitude_layer": 0,
+      "altitude_meters": 0.0,
+      "type": "exact_start"
+    },
+    {
+      "step": 2,
+      "latitude": 37.79461654297731,
+      "longitude": -122.40546613196496,
+      "altitude_layer": 0,
+      "altitude_meters": 0.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 3,
+      "latitude": 37.79461654297731,
+      "longitude": -122.40546613196496,
+      "altitude_layer": 1,
+      "altitude_meters": 15.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 4,
+      "latitude": 37.79461654297731,
+      "longitude": -122.40546613196496,
+      "altitude_layer": 2,
+      "altitude_meters": 30.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 5,
+      "latitude": 37.79461654297731,
+      "longitude": -122.40546613196496,
+      "altitude_layer": 3,
+      "altitude_meters": 45.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 6,
+      "latitude": 37.79461654297731,
+      "longitude": -122.40546613196496,
+      "altitude_layer": 4,
+      "altitude_meters": 60.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 7,
+      "latitude": 37.79416126957919,
+      "longitude": -122.40543928326817,
+      "altitude_layer": 5,
+      "altitude_meters": 75.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 8,
+      "latitude": 37.793705994474436,
+      "longitude": -122.40541243480195,
+      "altitude_layer": 6,
+      "altitude_meters": 90.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 9,
+      "latitude": 37.793516492580004,
+      "longitude": -122.40489939406582,
+      "altitude_layer": 7,
+      "altitude_meters": 105.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 10,
+      "latitude": 37.79332698755149,
+      "longitude": -122.40438635349935,
+      "altitude_layer": 8,
+      "altitude_meters": 120.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 11,
+      "latitude": 37.793137479388854,
+      "longitude": -122.40387331310262,
+      "altitude_layer": 8,
+      "altitude_meters": 120.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 12,
+      "latitude": 37.79294796809215,
+      "longitude": -122.40336027287572,
+      "altitude_layer": 8,
+      "altitude_meters": 120.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 13,
+      "latitude": 37.792758453661364,
+      "longitude": -122.40284723281877,
+      "altitude_layer": 8,
+      "altitude_meters": 120.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 14,
+      "latitude": 37.79256893609651,
+      "longitude": -122.4023341929318,
+      "altitude_layer": 8,
+      "altitude_meters": 120.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 15,
+      "latitude": 37.79237941539759,
+      "longitude": -122.40182115321493,
+      "altitude_layer": 8,
+      "altitude_meters": 120.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 16,
+      "latitude": 37.79218989156466,
+      "longitude": -122.4013081136682,
+      "altitude_layer": 8,
+      "altitude_meters": 120.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 17,
+      "latitude": 37.79200036459768,
+      "longitude": -122.40079507429174,
+      "altitude_layer": 8,
+      "altitude_meters": 120.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 18,
+      "latitude": 37.79181083449668,
+      "longitude": -122.40028203508558,
+      "altitude_layer": 8,
+      "altitude_meters": 120.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 19,
+      "latitude": 37.791621301261685,
+      "longitude": -122.39976899604984,
+      "altitude_layer": 8,
+      "altitude_meters": 120.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 20,
+      "latitude": 37.791431764892685,
+      "longitude": -122.3992559571846,
+      "altitude_layer": 8,
+      "altitude_meters": 120.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 21,
+      "latitude": 37.791242225389695,
+      "longitude": -122.39874291848993,
+      "altitude_layer": 8,
+      "altitude_meters": 120.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 22,
+      "latitude": 37.79078692826443,
+      "longitude": -122.39871609895549,
+      "altitude_layer": 8,
+      "altitude_meters": 120.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 23,
+      "latitude": 37.790597384065066,
+      "longitude": -122.39820306263928,
+      "altitude_layer": 8,
+      "altitude_meters": 120.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 24,
+      "latitude": 37.79014208367112,
+      "longitude": -122.39817624554297,
+      "altitude_layer": 8,
+      "altitude_meters": 120.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 25,
+      "latitude": 37.7896867815709,
+      "longitude": -122.398149428677,
+      "altitude_layer": 8,
+      "altitude_meters": 120.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 26,
+      "latitude": 37.78949723111292,
+      "longitude": -122.39763639694708,
+      "altitude_layer": 8,
+      "altitude_meters": 120.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 27,
+      "latitude": 37.78930767752107,
+      "longitude": -122.39712336538801,
+      "altitude_layer": 8,
+      "altitude_meters": 120.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 28,
+      "latitude": 37.78911812079539,
+      "longitude": -122.39661033399982,
+      "altitude_layer": 8,
+      "altitude_meters": 120.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 29,
+      "latitude": 37.78938386928522,
+      "longitude": -122.39612411081754,
+      "altitude_layer": 8,
+      "altitude_meters": 120.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 30,
+      "latitude": 37.78919430785406,
+      "longitude": -122.39561107756364,
+      "altitude_layer": 8,
+      "altitude_meters": 120.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 31,
+      "latitude": 37.78900474328908,
+      "longitude": -122.3950980444809,
+      "altitude_layer": 8,
+      "altitude_meters": 120.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 32,
+      "latitude": 37.78881517559022,
+      "longitude": -122.39458501156945,
+      "altitude_layer": 8,
+      "altitude_meters": 120.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 33,
+      "latitude": 37.78862560475758,
+      "longitude": -122.39407197882927,
+      "altitude_layer": 8,
+      "altitude_meters": 120.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 34,
+      "latitude": 37.7884360307911,
+      "longitude": -122.3935589462605,
+      "altitude_layer": 8,
+      "altitude_meters": 120.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 35,
+      "latitude": 37.78824645369083,
+      "longitude": -122.3930459138632,
+      "altitude_layer": 8,
+      "altitude_meters": 120.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 36,
+      "latitude": 37.78805687345676,
+      "longitude": -122.3925328816375,
+      "altitude_layer": 8,
+      "altitude_meters": 120.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 37,
+      "latitude": 37.787867290088904,
+      "longitude": -122.39201984958345,
+      "altitude_layer": 8,
+      "altitude_meters": 120.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 38,
+      "latitude": 37.78767770358731,
+      "longitude": -122.39150681770109,
+      "altitude_layer": 8,
+      "altitude_meters": 120.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 39,
+      "latitude": 37.78748811395193,
+      "longitude": -122.39099378599059,
+      "altitude_layer": 7,
+      "altitude_meters": 105.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 40,
+      "latitude": 37.78748811395193,
+      "longitude": -122.39099378599059,
+      "altitude_layer": 6,
+      "altitude_meters": 90.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 41,
+      "latitude": 37.78748811395193,
+      "longitude": -122.39099378599059,
+      "altitude_layer": 5,
+      "altitude_meters": 75.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 42,
+      "latitude": 37.7872985211828,
+      "longitude": -122.39048075445196,
+      "altitude_layer": 4,
+      "altitude_meters": 60.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 43,
+      "latitude": 37.78710892527996,
+      "longitude": -122.38996772308528,
+      "altitude_layer": 3,
+      "altitude_meters": 45.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 44,
+      "latitude": 37.78691932624337,
+      "longitude": -122.38945469189072,
+      "altitude_layer": 2,
+      "altitude_meters": 30.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 45,
+      "latitude": 37.78691932624337,
+      "longitude": -122.38945469189072,
+      "altitude_layer": 1,
+      "altitude_meters": 15.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 46,
+      "latitude": 37.78691932624337,
+      "longitude": -122.38945469189072,
+      "altitude_layer": 0,
+      "altitude_meters": 0.0,
+      "type": "h3_route"
+    },
+    {
+      "step": 47,
+      "latitude": 37.78695766,
+      "longitude": -122.38931347,
+      "altitude_layer": 0,
+      "altitude_meters": 0.0,
+      "type": "exact_goal"
+    }
+  ]
+}
