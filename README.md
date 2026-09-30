@@ -358,21 +358,3 @@ When changing routing behaviour:
 3. Run the regression tests.
 4. Compare the resulting route and metrics.
 5. Keep the change only when the baseline remains valid.
-
-## Scope
-
-The current V1 focuses on single-route 3D path planning with building
-constraints, vehicle-aware cost models, and route metrics.
-
-Advanced UTM capabilities, multi-drone coordination, weather/wind
-optimization, restricted airspace integration, and production flight
-certification are outside the current V1 scope.
-
-```
-
-**I would use this as the README update.** It accurately reflects what you've actually built now, rather than presenting completed work as “Next.”
-
-One important wording choice: I used **“validated 3D route”** in the context of your implemented routing/collision validation, while explicitly avoiding any claim that this is a **flight-certified safety system**.
-
-If you want, I can next turn this exact content into the actual `README.md` file for you.
-```
