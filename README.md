@@ -1,345 +1,183 @@
 # DragonFly UTM Routing Engine
 
-3D drone route planning engine for urban environments using **H3 spatial indexing**, **altitude layers**, **building geometry**, and **A* pathfinding**.
+A 3D drone routing engine that computes collision-free routes through
+building-constrained environments using H3 spatial cells, altitude
+layers, and A* pathfinding.
 
----
+## V1 Capability
 
-## Overview
+DragonFly accepts a routing request and returns a validated 3D route
+with:
 
-DragonFly generates altitude-aware drone routes through complex urban environments.
+- Exact start and goal coordinates
+- Building-aware collision avoidance
+- 3D altitude routing
+- Distance or energy optimization
+- Vehicle profile selection
+- Route distance and 3D distance
+- Climb and descent totals
+- Estimated flight time
+- Estimated energy consumption
+- Estimated battery usage
 
-The routing model combines:
-
-* H3-based spatial representation
-* 3D altitude layers
-* Building footprints and heights
-* A* pathfinding
-* Wind/environment data
-* Start and goal coordinate handling
-* Building collision validation
-
-The system is structured so that the **API layer exposes routing**, while the **routing engine contains the routing logic**.
-
----
+The current V1 uses a defined `default_multirotor` vehicle profile and
+a practical model-based energy estimate.
 
 ## Architecture
 
 ```text
-                    Client
-                      │
-                      │ POST /route
-                      ▼
-              ┌─────────────────┐
-              │   FastAPI API   │
-              │                 │
-              │ api/routes.py   │
-              │ api/models.py   │
-              └────────┬────────┘
-                       │
-                       ▼
-              ┌─────────────────┐
-              │ Routing Engine  │
-              │                 │
-              │ engine/          │
-              │ routing_engine.py│
-              └────────┬────────┘
-                       │
-          ┌────────────┼─────────────┐
-          │            │             │
-          ▼            ▼             ▼
-    ┌──────────┐ ┌────────────┐ ┌─────────────┐
-    │Buildings │ │ Pathfinder │ │  Weather /  │
-    │          │ │   A* 3D    │ │ Environment │
-    └──────────┘ └────────────┘ └─────────────┘
-          │            │
-          └────────────┼─────────────┐
-                       ▼             │
-                 H3 + Altitude       │
-                    Voxels            │
-                       │              │
-                       └──────┬───────┘
-                              ▼
-                       Generated Route
-```
-
----
+Client
+  |
+  v
+FastAPI
+  |
+  v
+RoutingEngine
+  |
+  +--> Building Service
+  |      |
+  |      +--> SF building GeoJSON
+  |      +--> Building heights
+  |      +--> Blocked 3D voxels
+  |
+  +--> Pathfinder3D
+  |      |
+  |      +--> H3 resolution 11
+  |      +--> 15 m altitude layers
+  |      +--> A* search
+  |
+  +--> Cost Model
+  |      |
+  |      +--> Distance
+  |      +--> Energy
+  |
+  +--> Vehicle Profile
+  |
+  v
+Validated 3D Route
+  |
+  +--> Waypoints
+  +--> Route metrics
+  +--> Energy metrics
+````
 
 ## Project Structure
 
 ```text
 dragon_fly/
-│
 ├── main.py
-│
 ├── api/
-│   ├── __init__.py
-│   ├── routes.py
-│   └── models.py
-│
+│   ├── models.py
+│   └── routes.py
 ├── engine/
-│   ├── __init__.py
-│   └── routing_engine.py
-│
-├── src/
-│   ├── pathfinder.py
-│   └── utm_interfaces.py
-│
+│   ├── routing_engine.py
+│   ├── vehicle_energy.py
+│   ├── vehicle_profile.py
+│   └── cost_models/
 ├── building_service/
 │   ├── building_service.py
 │   └── artifacts/
 │       └── sf_buildings.geojson
-│
 ├── weather_service/
-│   └── get_weather_data.py
-│
-├── demo_10.kml
+├── src/
+├── dragonfly_test/
 ├── requirements.txt
-└── README.md
+├── Dockerfile
+└── .dockerignore
 ```
-
----
-
-## Component Responsibilities
-
-### `main.py`
-
-Application entry point.
-
-Responsible only for creating the FastAPI application and registering the API router.
-
-```python
-from fastapi import FastAPI
-
-from api.routes import router
-
-app = FastAPI(
-    title="DragonFly UTM Routing Engine",
-    version="1.2",
-)
-
-app.include_router(router)
-```
-
----
-
-### `api/routes.py`
-
-Defines the HTTP API.
-
-The API layer:
-
-* Receives requests
-* Validates input through Pydantic models
-* Calls the routing engine
-* Converts engine errors into HTTP responses
-
-The routing algorithm does not live here.
-
----
-
-### `api/models.py`
-
-Contains API request models and validation rules.
-
-Main request model:
-
-```text
-RouteRequest
-```
-
-Parameters include:
-
-| Parameter                         | Description                        |
-| --------------------------------- | ---------------------------------- |
-| `start_lat`                       | Start latitude                     |
-| `start_lon`                       | Start longitude                    |
-| `goal_lat`                        | Goal latitude                      |
-| `goal_lon`                        | Goal longitude                     |
-| `start_altitude_meters`           | Start altitude                     |
-| `goal_altitude_meters`            | Goal altitude                      |
-| `minimum_transit_altitude_meters` | Minimum altitude during transit    |
-| `max_altitude_meters`             | Maximum permitted routing altitude |
-
----
-
-### `engine/routing_engine.py`
-
-Contains the routing orchestration.
-
-Responsibilities include:
-
-1. Loading building data
-2. Loading environmental data
-3. Building the 3D routing space
-4. Determining blocked H3/altitude cells
-5. Connecting exact coordinates to the routing graph
-6. Running the A* pathfinder
-7. Validating route segments
-8. Constructing the final route response
-
-FastAPI-specific logic remains outside the engine.
-
----
-
-### `src/pathfinder.py`
-
-Contains the 3D A* pathfinding implementation.
-
-The routing graph is represented as:
-
-```text
-(H3 Cell, Altitude Layer)
-```
-
-For example:
-
-```text
-(H3 cell A, 15 m)
-(H3 cell A, 30 m)
-(H3 cell B, 30 m)
-(H3 cell C, 45 m)
-```
-
-The pathfinder searches through these states while considering:
-
-* Horizontal movement
-* Vertical movement
-* Diagonal movement where permitted
-* Blocked cells
-* Distance cost
-* Altitude changes
-* Wind/environment costs
-* Goal direction
-* Movement penalties
-
----
 
 ## Routing Model
 
-DragonFly represents the urban environment as a 3D voxel-like search space.
-
-Each routing state consists of:
+DragonFly represents each routing state as:
 
 ```text
-H3 spatial cell
-+
-Altitude layer
+(H3 cell, altitude layer)
 ```
 
 Current configuration:
 
-```text
-H3 Resolution:        11
-Altitude Layer Height: 15 m
-Maximum Altitude:     300 m
-Maximum Layers:       20
-```
+| Parameter                     |    V1 |
+| ----------------------------- | ----: |
+| H3 resolution                 |    11 |
+| Altitude layer                |  15 m |
+| Maximum altitude              | 300 m |
+| Horizontal building clearance |  15 m |
+| Vertical building clearance   |  15 m |
 
-This creates a structured 3D search space suitable for A* pathfinding.
+Building heights are derived from:
 
----
-
-## Building Model
-
-Building data is loaded from:
-
-```text
-building_service/artifacts/sf_buildings.geojson
-```
-
-The building dataset contains:
-
-* Building footprints
-* Building heights
-* Floor information where available
-* Other building attributes
-
-### Building Height
-
-Height is determined using the following priority:
-
-```text
-1. height
-2. num_floors × 3.5 m
+1. `height`
+2. `num_floors × 3.5 m`
 3. 15 m fallback
-```
 
-`level` is not used as total building height.
+## Optimization
 
-### Effective Obstacle Height
+The API supports two objectives:
 
-The current implementation adds vertical clearance to the building height:
+### Distance
 
-```text
-effective obstacle height
-=
-building height
-+
-vertical clearance
-```
+Minimizes the routing cost based on horizontal and vertical movement.
 
-Current vertical clearance:
+### Energy
 
-```text
-15 m
-```
+Uses the selected vehicle profile to estimate energy required for
+horizontal flight, climbing, and descending.
 
-The building footprint is also expanded using the configured horizontal safety margin.
+The two objectives can produce different 3D routes. For the current
+San Francisco baseline, the energy objective selects a lower-altitude,
+longer-horizontal route while consuming less estimated energy than the
+distance-optimized route.
 
-Current horizontal safety margin:
+## Vehicle Profile
+
+Current V1 profile:
 
 ```text
-15 m
+default_multirotor
 ```
 
-The resulting building geometry is converted into blocked H3/altitude states for routing.
+Key parameters include:
 
----
+* Mass
+* Cruise speed
+* Climb speed
+* Descent speed
+* Horizontal power
+* Climb power
+* Descent power
+* Battery capacity
+* Maximum altitude
+* Maximum climb/descent rate
 
-## Example
-
-For a building with:
-
-```text
-Building height = 42 m
-Vertical clearance = 15 m
-```
-
-The effective obstacle height becomes:
-
-```text
-42 + 15 = 57 m
-```
-
-With 15 m altitude layers, the pathfinder must route above the corresponding blocked layers.
-
-A route can therefore move from:
-
-```text
-0 m
-  ↓
-15 m
-  ↓
-30 m
-  ↓
-45 m
-  ↓
-60 m
-```
-
-and continue above the effective obstacle height.
-
----
+The current energy model is intended for V1 route optimization and
+estimation. It is not a certified aircraft performance or flight-safety
+model.
 
 ## API
 
-### Endpoint
+### Health Check
 
-```text
+```http
+GET /health
+```
+
+Response:
+
+```json
+{
+  "status": "ok",
+  "service": "dragonfly-routing-engine",
+  "version": "1.2"
+}
+```
+
+### Route
+
+```http
 POST /route
 ```
 
-### Example Request
+Example:
 
 ```json
 {
@@ -350,131 +188,124 @@ POST /route
   "start_altitude_meters": 0,
   "goal_altitude_meters": 0,
   "minimum_transit_altitude_meters": 30,
-  "max_altitude_meters": 300
+  "max_altitude_meters": 300,
+  "objective": "energy",
+  "vehicle_profile": "default_multirotor"
 }
 ```
 
-### Example Response Structure
+The response contains:
 
-```json
-{
-  "route": [],
-  "total_waypoints": 0,
-  "total_distance_meters": 0,
-  "metadata": {}
-}
+```text
+status
+objective
+vehicle
+metrics
+waypoints
 ```
 
-The exact response contains the generated route waypoints together with routing metadata.
+### Metrics
 
----
+The route response currently reports:
 
-## Running the Application
+```text
+distance_meters
+3d_distance_meters
+total_climb_meters
+total_descent_meters
+flight_time_seconds
+energy_joules
+energy_wh
+battery_percent
+```
 
-Install dependencies:
+## Running Locally
+
+### Create environment
+
+```bash
+python -m venv .venv
+```
+
+Windows:
+
+```bash
+.venv\Scripts\activate
+```
+
+Linux/macOS:
+
+```bash
+source .venv/bin/activate
+```
+
+### Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Start the API:
+### Start the API
 
 ```bash
 uvicorn main:app --reload
 ```
 
-The API will be available through the local FastAPI server.
-
-Interactive API documentation is available at:
+API documentation:
 
 ```text
-/docs
+http://127.0.0.1:8000/docs
 ```
 
----
+Health check:
 
-## Routing Configuration
+```text
+http://127.0.0.1:8000/health
+```
 
-Current routing configuration:
+## Docker
 
-| Parameter                |      Value |
-| ------------------------ | ---------: |
-| H3 Resolution            |         11 |
-| Altitude Layer           |       15 m |
-| Maximum Altitude         |      300 m |
-| Horizontal Safety Margin |       15 m |
-| Vertical Clearance       |       15 m |
-| Endpoint Search Radius   | 3 H3 cells |
+Build:
 
-These values are configuration parameters of the current routing implementation and can be refined as the routing model develops.
+```bash
+docker build -t dragonfly-routing-engine .
+```
 
----
+Run:
 
-## Development Approach
+```bash
+docker run --rm -p 8000:8000 dragonfly-routing-engine
+```
 
-DragonFly is being developed in stages.
+Then:
 
-### 1. Routing Foundation
+```text
+http://localhost:8000/docs
+http://localhost:8000/health
+```
 
-Establish a reliable 3D routing engine based on:
+## Testing
 
-* H3
-* Altitude layers
-* Building obstacles
-* A* search
+The project includes automated tests covering:
 
-### 2. Route Quality
+* Vehicle energy calculations
+* Route request validation
+* Routing regression
+* Distance vs energy objectives
+* Route metric consistency
+* API response behavior
+* Health endpoint
 
-Improve:
+Run all tests:
 
-* Route distance
-* Altitude changes
-* Unnecessary zig-zag movement
-* Climb/descent behaviour
-* Search efficiency
-
-### 3. Environmental Constraints
-
-Introduce additional real-world constraints such as:
-
-* Weather
-* Wind
-* Terrain/elevation
-* Restricted airspace
-* No-fly zones
-* Drone performance limits
-
-### 4. Product Layer
-
-Develop:
-
-* Stable API contracts
-* Route metadata
-* Configuration
-* Error handling
-* Visualization
-* Performance optimization
-
-### 5. Validation and Research
-
-Maintain reproducible routing experiments and measurements including:
-
-* Route success rate
-* Computation time
-* Route distance
-* Altitude profile
-* Number of altitude transitions
-* Building density
-* H3 resolution
-* Search-space size
-
-This provides a foundation for systematic evaluation of the routing algorithms as the product develops.
-
----
+```bash
+pytest -v
+```
 
 ## Working Routing Demonstration
 
-The following test demonstrates the current 3D routing behaviour in a dense San Francisco building area.
+The following test demonstrates the current 3D routing behaviour in a
+dense San Francisco building area.
 
 ### Request
 
@@ -487,25 +318,61 @@ The following test demonstrates the current 3D routing behaviour in a dense San 
   "start_altitude_meters": 0,
   "goal_altitude_meters": 0,
   "minimum_transit_altitude_meters": 30,
-  "max_altitude_meters": 300
+  "max_altitude_meters": 300,
+  "objective": "energy",
+  "vehicle_profile": "default_multirotor"
 }
 ```
 
 ### Result
 
-The generated route successfully navigates through the building-dense area by using the available altitude layers rather than simply following a straight horizontal path.
+The generated route navigates through the building-constrained
+environment using available horizontal and altitude layers.
 
 ![Working 3D routing result](docs/images/routing-result.png)
 
-This image is a visual reference for the current routing milestone. The red route represents the generated 3D route relative to the surrounding building environment.
+## V1 Validation
 
+The current V1 baseline has automated regression coverage for:
 
-### Result
+* Exact endpoint preservation
+* Altitude bounds
+* Successful 3D routing
+* Distance optimization
+* Energy optimization
+* Energy metric consistency
+* API validation
+* Health endpoint
 
-The generated route successfully navigates through the building-dense area by using the available altitude layers rather than simply following a straight horizontal path.
+The Docker image has also been verified by running both `/health` and
+`/route` successfully inside the container.
 
-![Working 3D routing result](metadata/media/routing-result.png)
+## Development Principle
 
-![Working 3D routing result](metadata/media/routing-result_1.png)
+DragonFly is developed incrementally from a known-good routing baseline.
 
-This image is a visual reference for the current routing milestone. The red route represents the generated 3D route relative to the surrounding building environment.
+When changing routing behaviour:
+
+1. Reproduce the baseline.
+2. Change one component.
+3. Run the regression tests.
+4. Compare the resulting route and metrics.
+5. Keep the change only when the baseline remains valid.
+
+## Scope
+
+The current V1 focuses on single-route 3D path planning with building
+constraints, vehicle-aware cost models, and route metrics.
+
+Advanced UTM capabilities, multi-drone coordination, weather/wind
+optimization, restricted airspace integration, and production flight
+certification are outside the current V1 scope.
+
+```
+
+**I would use this as the README update.** It accurately reflects what you've actually built now, rather than presenting completed work as “Next.”
+
+One important wording choice: I used **“validated 3D route”** in the context of your implemented routing/collision validation, while explicitly avoiding any claim that this is a **flight-certified safety system**.
+
+If you want, I can next turn this exact content into the actual `README.md` file for you.
+```
