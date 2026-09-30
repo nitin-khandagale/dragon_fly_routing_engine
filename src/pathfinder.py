@@ -30,39 +30,29 @@ class Pathfinder3D:
         self.edge_validator = edge_validator
 
         # ====================================================
-        # COST MODEL
+        # PHYSICAL COST MODEL
         # ====================================================
 
-        # Horizontal movement to an adjacent H3 cell.
-        self.HORIZONTAL_COST = 1.0
+        # Horizontal movement uses actual distance in meters.
+        self.HORIZONTAL_WEIGHT = 1.0
 
-        # Diagonal altitude change is relatively cheap because the
-        # drone is already travelling horizontally.
-        self.CLIMB_COST = 0.15
-        self.DESCENT_COST = 0.08
+        # Vertical movement is more expensive than horizontal
+        # movement because climbing requires additional energy.
+        self.CLIMB_WEIGHT = 1.5
 
-        # Pure vertical movement remains more expensive.
-        self.VERTICAL_CLIMB_COST = 0.55
-        self.VERTICAL_DESCENT_COST = 0.35
+        # Descent is cheaper than climbing.
+        self.DESCENT_WEIGHT = 1.0
+
+        # Each altitude layer represents 15 meters.
+        self.ALTITUDE_LAYER_HEIGHT_METERS = 15.0
 
         self.WIND_WEIGHT = 1.0
 
-        # Small penalty for a move that increases horizontal
-        # distance from the destination.
-        #
-        # This is deliberately SMALL because legitimate building
-        # avoidance may require temporarily moving away.
-        self.AWAY_FROM_GOAL_PENALTY = 0.12
+        self.AWAY_FROM_GOAL_PENALTY = 5.0
 
-        # Stronger penalty for immediately returning to the
-        # horizontal H3 cell we just came from.
-        #
-        # This targets:
-        #
-        #     A -> B -> A
-        #
-        # without banning it.
-        self.IMMEDIATE_REVERSAL_PENALTY = 1.25
+        self.IMMEDIATE_REVERSAL_PENALTY = 50.0
+
+        
 
 
     # ========================================================
@@ -94,35 +84,32 @@ class Pathfinder3D:
         hex_b: str,
     ) -> float:
 
-        try:
-            return float(
-                h3.grid_distance(hex_a, hex_b)
+        lat1, lon1 = h3.cell_to_latlng(hex_a)
+        lat2, lon2 = h3.cell_to_latlng(hex_b)
+
+        radius = 6_371_000.0
+
+        lat1_rad = math.radians(lat1)
+        lat2_rad = math.radians(lat2)
+
+        dlat = math.radians(lat2 - lat1)
+        dlon = math.radians(lon2 - lon1)
+
+        a = (
+            math.sin(dlat / 2) ** 2
+            + math.cos(lat1_rad)
+            * math.cos(lat2_rad)
+            * math.sin(dlon / 2) ** 2
+        )
+
+        return (
+            2
+            * radius
+            * math.atan2(
+                math.sqrt(a),
+                math.sqrt(1 - a),
             )
-
-        except Exception:
-            lat1, lon1 = h3.cell_to_latlng(hex_a)
-            lat2, lon2 = h3.cell_to_latlng(hex_b)
-
-            # Approximate distance.
-            lat_scale = 111_320.0
-
-            avg_lat = math.radians(
-                (lat1 + lat2) / 2.0
-            )
-
-            dx = (
-                (lon2 - lon1)
-                * lat_scale
-                * math.cos(avg_lat)
-            )
-
-            dy = (
-                (lat2 - lat1)
-                * lat_scale
-            )
-
-            # Convert approximately into H3-step units.
-            return math.hypot(dx, dy) / 50.0
+        )
 
 
     # ========================================================
@@ -138,22 +125,25 @@ class Pathfinder3D:
         current_hex, current_alt = current
         goal_hex, goal_alt = goal
 
-        horizontal = self._horizontal_distance(
-            current_hex,
-            goal_hex,
+        horizontal_distance = (
+            self._horizontal_distance(
+                current_hex,
+                goal_hex,
+            )
         )
 
-        vertical = abs(
+        altitude_difference = abs(
             current_alt - goal_alt
         )
 
-        # Keep the heuristic conservative.
-        #
-        # Horizontal movement costs at least 1.
-        # Vertical movement costs at least ~0.65.
+        vertical_distance = (
+            altitude_difference
+            * self.ALTITUDE_LAYER_HEIGHT_METERS
+        )
+
         return (
-            horizontal * self.HORIZONTAL_COST
-            + vertical * 0.35
+            horizontal_distance
+            + vertical_distance
         )
 
 
@@ -256,142 +246,46 @@ class Pathfinder3D:
 
     def _movement_cost(
         self,
-        previous: Voxel3D | None,
         current: Voxel3D,
         neighbor: Voxel3D,
-        goal: Voxel3D,
     ) -> float:
 
         current_hex, current_alt = current
         neighbor_hex, neighbor_alt = neighbor
 
-        horizontal_move = (
-            current_hex != neighbor_hex
-        )
+        # Horizontal distance in metres.
+        horizontal_distance = 0.0
 
-        altitude_change = (
-            neighbor_alt - current_alt
-        )
-
-        cost = 0.0
-
-
-        # ====================================================
-        # BASE MOVEMENT COST
-        # ====================================================
-
-        if horizontal_move:
-
-            cost += self.HORIZONTAL_COST
-
-            if altitude_change > 0:
-                cost += self.CLIMB_COST
-
-            elif altitude_change < 0:
-                cost += self.DESCENT_COST
-
-        else:
-
-            if altitude_change > 0:
-                cost += self.VERTICAL_CLIMB_COST
-
-            elif altitude_change < 0:
-                cost += self.VERTICAL_DESCENT_COST
-
-
-        # ====================================================
-        # WIND
-        # ====================================================
-
-        if horizontal_move:
-
-            wind_cost = self.wind_costs.get(
-                neighbor,
-                0.0,
+        if current_hex != neighbor_hex:
+            horizontal_distance = self._horizontal_distance(
+                current_hex,
+                neighbor_hex,
             )
 
+        # Vertical distance in metres.
+        vertical_distance = (
+            abs(neighbor_alt - current_alt)
+            * self.ALTITUDE_LAYER_HEIGHT_METERS
+        )
+
+        cost = (
+            horizontal_distance
+            * self.HORIZONTAL_WEIGHT
+        )
+
+        # Climbing.
+        if neighbor_alt > current_alt:
             cost += (
-                wind_cost
-                * self.WIND_WEIGHT
+                vertical_distance
+                * self.CLIMB_WEIGHT
             )
 
-
-        # ====================================================
-        # PROGRESS PENALTY
-        # ====================================================
-        #
-        # Don't prohibit moving away from the goal.
-        #
-        # Just make it slightly more expensive when there is
-        # another equally safe route that moves forward.
-        # ====================================================
-
-        if horizontal_move:
-
-            current_distance = (
-                self._horizontal_distance(
-                    current_hex,
-                    goal[0],
-                )
+        # Descending.
+        elif neighbor_alt < current_alt:
+            cost += (
+                vertical_distance
+                * self.DESCENT_WEIGHT
             )
-
-            neighbor_distance = (
-                self._horizontal_distance(
-                    neighbor_hex,
-                    goal[0],
-                )
-            )
-
-            if neighbor_distance > current_distance:
-
-                amount_away = (
-                    neighbor_distance
-                    - current_distance
-                )
-
-                cost += (
-                    self.AWAY_FROM_GOAL_PENALTY
-                    * amount_away
-                )
-
-
-        # ====================================================
-        # IMMEDIATE HORIZONTAL REVERSAL
-        # ====================================================
-        #
-        # Detect:
-        #
-        #       previous horizontal cell = A
-        #       current horizontal cell  = B
-        #       next horizontal cell     = A
-        #
-        # Example from your route:
-        #
-        #       A @ 105
-        #          ↘
-        #           B @ 120
-        #          ↙
-        #       A @ 135
-        #
-        # We don't ban this because there may be a rare
-        # legitimate reason for it.
-        #
-        # We simply make it unattractive.
-        # ====================================================
-
-        if previous is not None:
-
-            previous_hex = previous[0]
-
-            if (
-                horizontal_move
-                and neighbor_hex == previous_hex
-                and current_hex != previous_hex
-            ):
-                cost += (
-                    self.IMMEDIATE_REVERSAL_PENALTY
-                )
-
 
         return cost
 
@@ -494,16 +388,6 @@ class Pathfinder3D:
             if expansions > self.max_expansions:
                 return None
 
-
-            # =================================================
-            # PREVIOUS STATE
-            # =================================================
-
-            previous = came_from.get(
-                current
-            )
-
-
             # =================================================
             # EXPAND
             # =================================================
@@ -585,13 +469,9 @@ class Pathfinder3D:
                 # MOVEMENT COST
                 # =============================================
 
-                movement_cost = (
-                    self._movement_cost(
-                        previous=previous,
-                        current=current,
-                        neighbor=neighbor,
-                        goal=goal,
-                    )
+                movement_cost = self._movement_cost(
+                    current=current,
+                    neighbor=neighbor,
                 )
 
                 tentative_g = (
