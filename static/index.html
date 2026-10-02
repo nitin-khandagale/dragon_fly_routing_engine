@@ -340,39 +340,48 @@
         </div>
 
 
-        <div class="waypoints-section">
+        <div class="route-3d-section">
 
-            <div class="visual-header">
-                <div>
-                    <div class="visual-title">WAYPOINTS</div>
-                    <div class="visual-subtitle">
-                        VALIDATED 3D ROUTE
-                    </div>
-                </div>
-
-                <div id="waypoint-count" class="waypoint-count">
-                    0 POINTS
-                </div>
+    <div class="visual-header">
+        <div>
+            <div class="visual-title">3D ROUTE VIEW</div>
+            <div class="visual-subtitle">
+                INTERACTIVE FLIGHT PATH / BUILDING AWARE
             </div>
-
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>STEP</th>
-                            <th>LATITUDE</th>
-                            <th>LONGITUDE</th>
-                            <th>ALT / M</th>
-                            <th>LAYER</th>
-                            <th>TYPE</th>
-                        </tr>
-                    </thead>
-
-                    <tbody id="waypoint-table"></tbody>
-                </table>
-            </div>
-
         </div>
+
+        <div id="route-3d-info" class="waypoint-count">
+            ROUTE READY
+        </div>
+    </div>
+
+    <div id="route-3d-view" class="route-3d-view">
+
+        <div class="route-3d-overlay">
+            <div>
+                <span>START</span>
+                <strong id="route-start-altitude">—</strong>
+            </div>
+
+            <div>
+                <span>MAX ALTITUDE</span>
+                <strong id="route-view-max-altitude">—</strong>
+            </div>
+
+            <div>
+                <span>DESTINATION</span>
+                <strong id="route-goal-altitude">—</strong>
+            </div>
+        </div>
+
+        <div class="route-3d-controls">
+            <span>DRAG TO ORBIT</span>
+            <span>SCROLL TO ZOOM</span>
+        </div>
+
+    </div>
+
+</div>
 
     </section>
 
@@ -391,8 +400,15 @@
         <a href="/health" target="_blank">HEALTH</a>
     </div>
 </footer>
-
-<script src="/app.js"></script>
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+    }
+}
+</script>
+<script type="module" src="/app.js?v=4"></script>
 
 </body>
 </html>

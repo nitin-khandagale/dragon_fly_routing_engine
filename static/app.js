@@ -1,3 +1,7 @@
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+
 const tabs = document.querySelectorAll(".input-tab");
 const formMode = document.getElementById("form-mode");
 const jsonMode = document.getElementById("json-mode");
@@ -12,6 +16,14 @@ const requestJson = document.getElementById("request-json");
 const loadExampleButton = document.getElementById("load-example");
 
 let currentMode = "form";
+
+let scene = null;
+let camera = null;
+let renderer = null;
+let controls = null;
+let routeGroup = null;
+
+let animationFrame = null;
 
 
 const exampleRequest = {
@@ -134,15 +146,11 @@ function getJsonRequest() {
     let parsed;
 
     try {
-
         parsed = JSON.parse(requestJson.value);
-
     } catch (error) {
-
         throw new Error(
             "Invalid JSON. Please check the request body."
         );
-
     }
 
     if (
@@ -150,11 +158,9 @@ function getJsonRequest() {
         typeof parsed !== "object" ||
         Array.isArray(parsed)
     ) {
-
         throw new Error(
             "Request JSON must be a JSON object."
         );
-
     }
 
     return parsed;
@@ -163,7 +169,7 @@ function getJsonRequest() {
 
 
 /* ---------------------------------- */
-/* REQUEST                            */
+/* CALCULATE ROUTE                    */
 /* ---------------------------------- */
 
 async function calculateRoute() {
@@ -196,11 +202,9 @@ async function calculateRoute() {
 
 
         if (!response.ok) {
-
             throw new Error(
                 data.detail || "Routing request failed."
             );
-
         }
 
 
@@ -257,9 +261,9 @@ function renderResult(data) {
 
     document.getElementById(
         "metric-battery"
-    ).textContent = formatNumber(
-        metrics.battery_percent
-    ) + "%";
+    ).textContent =
+        formatNumber(metrics.battery_percent) + "%";
+
 
     const maxAltitude = data.waypoints.length
         ? Math.max(
@@ -269,23 +273,30 @@ function renderResult(data) {
         )
         : 0;
 
+
     document.getElementById(
         "metric-max-altitude"
-    ).textContent = formatNumber(maxAltitude);
+    ).textContent =
+        formatNumber(maxAltitude);
 
 
     document.getElementById(
         "result-objective"
-    ).textContent = data.objective.toUpperCase();
+    ).textContent =
+        data.objective.toUpperCase();
+
 
     document.getElementById(
         "result-vehicle"
-    ).textContent = data.vehicle.profile;
+    ).textContent =
+        data.vehicle.profile;
+
 
     document.getElementById(
         "result-climb"
     ).textContent =
         formatNumber(metrics.total_climb_meters) + " M";
+
 
     document.getElementById(
         "result-descent"
@@ -294,23 +305,22 @@ function renderResult(data) {
 
 
     document.getElementById(
-        "waypoint-count"
+        "route-3d-info"
     ).textContent =
-        `${data.waypoints.length} POINTS`;
+        `${data.waypoints.length} WAYPOINTS / 3D`;
 
 
     renderChart(data.waypoints);
-    renderWaypoints(data.waypoints);
-
 
     resultSection.classList.add("visible");
+
+    render3DRoute(data.waypoints);
 
     resultSection.scrollIntoView({
         behavior: "smooth",
         block: "start"
     });
-
-}
+    }
 
 
 /* ---------------------------------- */
@@ -319,7 +329,8 @@ function renderResult(data) {
 
 function renderChart(waypoints) {
 
-    const svg = document.getElementById("altitude-chart");
+    const svg =
+        document.getElementById("altitude-chart");
 
     svg.innerHTML = "";
 
@@ -379,13 +390,12 @@ function renderChart(waypoints) {
     }
 
 
-    /* Grid */
-
     for (let i = 0; i <= 4; i++) {
 
         const gridY =
             paddingTop +
             (chartHeight / 4) * i;
+
 
         const line =
             document.createElementNS(
@@ -394,7 +404,11 @@ function renderChart(waypoints) {
             );
 
         line.setAttribute("x1", paddingLeft);
-        line.setAttribute("x2", width - paddingRight);
+        line.setAttribute(
+            "x2",
+            width - paddingRight
+        );
+
         line.setAttribute("y1", gridY);
         line.setAttribute("y2", gridY);
 
@@ -415,9 +429,15 @@ function renderChart(waypoints) {
             );
 
         label.setAttribute("x", 8);
-        label.setAttribute("y", gridY + 4);
+        label.setAttribute(
+            "y",
+            gridY + 4
+        );
 
-        label.setAttribute("class", "chart-label");
+        label.setAttribute(
+            "class",
+            "chart-label"
+        );
 
         label.textContent =
             Math.round(altitude) + "m";
@@ -426,8 +446,6 @@ function renderChart(waypoints) {
 
     }
 
-
-    /* Route line */
 
     let pathData = "";
 
@@ -450,79 +468,622 @@ function renderChart(waypoints) {
             "path"
         );
 
-    path.setAttribute("d", pathData);
-    path.setAttribute("class", "chart-line");
+    path.setAttribute(
+        "d",
+        pathData
+    );
+
+    path.setAttribute(
+        "class",
+        "chart-line"
+    );
 
     svg.appendChild(path);
 
 
-    /* Start / end markers */
+    [0, waypoints.length - 1].forEach(
+        (index) => {
 
-    [0, waypoints.length - 1].forEach((index) => {
+            const circle =
+                document.createElementNS(
+                    "http://www.w3.org/2000/svg",
+                    "circle"
+                );
 
-        const circle =
-            document.createElementNS(
-                "http://www.w3.org/2000/svg",
-                "circle"
+            circle.setAttribute(
+                "cx",
+                x(index)
             );
 
-        circle.setAttribute("cx", x(index));
-        circle.setAttribute(
-            "cy",
-            y(waypoints[index].altitude_meters)
+            circle.setAttribute(
+                "cy",
+                y(
+                    waypoints[index].altitude_meters
+                )
+            );
+
+            circle.setAttribute(
+                "r",
+                4
+            );
+
+            circle.setAttribute(
+                "fill",
+                "#f4f4f0"
+            );
+
+            svg.appendChild(circle);
+
+        }
+    );
+
+}
+
+
+/* ---------------------------------- */
+/* THREE.JS ROUTE VIEW                */
+/* ---------------------------------- */
+
+function init3DScene() {
+
+    const container =
+        document.getElementById("route-3d-view");
+
+    if (!container) {
+        return;
+    }
+
+    scene = new THREE.Scene();
+
+    scene.background =
+        new THREE.Color(0x080808);
+
+
+    camera =
+        new THREE.PerspectiveCamera(
+            45,
+            container.clientWidth /
+                container.clientHeight,
+            0.1,
+            100000
         );
 
-        circle.setAttribute("r", 4);
-        circle.setAttribute("fill", "#f4f4f0");
 
-        svg.appendChild(circle);
+    renderer =
+        new THREE.WebGLRenderer({
+            antialias: true
+        });
 
-    });
 
+    renderer.setPixelRatio(
+        Math.min(window.devicePixelRatio, 2)
+    );
+
+
+    renderer.setSize(
+        container.clientWidth,
+        container.clientHeight
+    );
+
+
+    container.appendChild(
+        renderer.domElement
+    );
+
+
+    controls =
+        new OrbitControls(
+            camera,
+            renderer.domElement
+        );
+
+
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+
+    controls.minDistance = 10;
+    controls.maxDistance = 10000;
+
+
+    /* ---------------------------------- */
+    /* Lighting                           */
+    /* ---------------------------------- */
+
+    scene.add(
+        new THREE.AmbientLight(
+            0xffffff,
+            1.5
+        )
+    );
+
+
+    const light =
+        new THREE.DirectionalLight(
+            0xffffff,
+            2
+        );
+
+    light.position.set(
+        200,
+        500,
+        200
+    );
+
+    scene.add(light);
+
+
+    /* ---------------------------------- */
+    /* Ground grid                        */
+    /* ---------------------------------- */
+
+    const grid =
+        new THREE.GridHelper(
+            2000,
+            40,
+            0x333333,
+            0x181818
+        );
+
+    scene.add(grid);
+
+
+    window.addEventListener(
+        "resize",
+        resize3DScene
+    );
+
+
+    animate3D();
 }
 
 
 /* ---------------------------------- */
-/* WAYPOINT TABLE                     */
+/* RENDER 3D ROUTE                    */
 /* ---------------------------------- */
 
-function renderWaypoints(waypoints) {
+function render3DRoute(waypoints) {
 
-    const table =
-        document.getElementById("waypoint-table");
+    if (!waypoints || waypoints.length < 2) {
+        return;
+    }
 
-    table.innerHTML = "";
+    // The results section must be visible before Three.js
+    // measures the container.
+    resultSection.classList.add("visible");
+
+    if (!scene) {
+        init3DScene();
+    }
+
+    // The browser may not have completed layout yet.
+    // Re-measure the renderer after the results section is visible.
+    resize3DScene();
 
 
-    waypoints.forEach((waypoint) => {
+    /* Remove previous route */
 
-        const row = document.createElement("tr");
+    if (routeGroup) {
+        scene.remove(routeGroup);
+    }
 
-        row.innerHTML = `
-            <td>${waypoint.step}</td>
-            <td>${formatCoordinate(waypoint.latitude)}</td>
-            <td>${formatCoordinate(waypoint.longitude)}</td>
-            <td>${formatNumber(waypoint.altitude_meters)}</td>
-            <td>${waypoint.altitude_layer}</td>
-            <td>${waypoint.type}</td>
-        `;
 
-        table.appendChild(row);
+    routeGroup =
+        new THREE.Group();
+
+
+    /*
+     * Geographic origin.
+     *
+     * Everything is converted into a local
+     * coordinate system around the first point.
+     */
+
+    const origin =
+        waypoints[0];
+
+
+    const metersPerLatitude =
+        111320;
+
+
+    const metersPerLongitude =
+        111320 *
+        Math.cos(
+            origin.latitude *
+            Math.PI /
+            180
+        );
+
+
+    /*
+     * Convert every API waypoint into
+     * Three.js coordinates.
+     */
+
+    const positions =
+        waypoints.map((waypoint) => {
+
+            const x =
+                (
+                    waypoint.longitude -
+                    origin.longitude
+                ) *
+                metersPerLongitude;
+
+
+            const z =
+                -(
+                    waypoint.latitude -
+                    origin.latitude
+                ) *
+                metersPerLatitude;
+
+
+            /*
+             * Exaggerate altitude so that
+             * the 3D route is visually clear.
+             */
+
+            const y =
+                Number(
+                    waypoint.altitude_meters
+                ) * 1.8;
+
+
+            return new THREE.Vector3(
+                x,
+                y,
+                z
+            );
+
+        });
+
+
+    /* ---------------------------------- */
+    /* ROUTE LINE                         */
+    /* ---------------------------------- */
+
+    const routeGeometry =
+        new THREE.BufferGeometry();
+
+    routeGeometry.setFromPoints(
+        positions
+    );
+
+
+    const routeMaterial =
+        new THREE.LineBasicMaterial({
+            color: 0xffffff,
+            transparent: false
+        });
+
+
+    const routeLine =
+        new THREE.Line(
+            routeGeometry,
+            routeMaterial
+        );
+
+
+    routeGroup.add(
+        routeLine
+    );
+
+
+    /* ---------------------------------- */
+    /* GROUND PROJECTION                  */
+    /* ---------------------------------- */
+
+    const groundPositions =
+        positions.map(
+            (point) =>
+                new THREE.Vector3(
+                    point.x,
+                    0,
+                    point.z
+                )
+        );
+
+
+    const groundGeometry =
+        new THREE.BufferGeometry();
+
+    groundGeometry.setFromPoints(
+        groundPositions
+    );
+
+
+    const groundMaterial =
+        new THREE.LineDashedMaterial({
+            color: 0x777777,
+            dashSize: 5,
+            gapSize: 5
+        });
+
+
+    const groundLine =
+        new THREE.Line(
+            groundGeometry,
+            groundMaterial
+        );
+
+
+    groundLine.computeLineDistances();
+
+
+    routeGroup.add(
+        groundLine
+    );
+
+
+    /* ---------------------------------- */
+    /* ALTITUDE GUIDES                    */
+    /* ---------------------------------- */
+
+    positions.forEach((point) => {
+
+        const geometry =
+            new THREE.BufferGeometry();
+
+        geometry.setFromPoints([
+            new THREE.Vector3(
+                point.x,
+                0,
+                point.z
+            ),
+
+            point
+        ]);
+
+
+        const material =
+            new THREE.LineBasicMaterial({
+                color: 0x555555,
+                transparent: true,
+                opacity: 0.45
+            });
+
+
+        const line =
+            new THREE.Line(
+                geometry,
+                material
+            );
+
+
+        routeGroup.add(line);
 
     });
 
+
+    /* ---------------------------------- */
+    /* ADD ROUTE TO SCENE                 */
+    /* ---------------------------------- */
+
+    scene.add(
+        routeGroup
+    );
+
+
+    /* ---------------------------------- */
+    /* FIT CAMERA TO ROUTE                */
+    /* ---------------------------------- */
+
+    const box =
+        new THREE.Box3();
+
+    positions.forEach(
+        (point) => {
+            box.expandByPoint(point);
+        }
+    );
+
+
+    const center =
+        new THREE.Vector3();
+
+    box.getCenter(center);
+
+
+    const size =
+        new THREE.Vector3();
+
+    box.getSize(size);
+
+
+    const maxDimension =
+        Math.max(
+            size.x,
+            size.y,
+            size.z,
+            100
+        );
+
+    /*
+     * Fit the camera to the complete route.
+     * Use the bounding sphere so long routes are not
+     * clipped by the camera field of view.
+     */
+
+    const radius = Math.max(
+        box.getBoundingSphere(
+            new THREE.Sphere()
+        ).radius,
+        50
+    );
+
+    const fovRadians =
+        camera.fov * Math.PI / 180;
+
+    const cameraDistance =
+        (radius / Math.sin(fovRadians / 2)) * 1.35;
+
+    const direction =
+        new THREE.Vector3(
+            1,
+            0.75,
+            1
+        ).normalize();
+
+    camera.position.copy(
+        center
+    ).add(
+        direction.multiplyScalar(
+            cameraDistance
+        )
+    );
+
+    camera.near = 0.1;
+    camera.far = Math.max(
+        100000,
+        cameraDistance * 10
+    );
+
+    camera.updateProjectionMatrix();
+
+    controls.target.copy(
+        center
+    );
+
+    controls.update();
+
+
+    /* ---------------------------------- */
+    /* UI                                  */
+    /* ---------------------------------- */
+
+    const maxAltitude =
+        Math.max(
+            ...waypoints.map(
+                waypoint =>
+                    Number(
+                        waypoint.altitude_meters
+                    )
+            )
+        );
+
+
+    document.getElementById(
+        "route-start-altitude"
+    ).textContent =
+        formatNumber(
+            waypoints[0].altitude_meters
+        ) + " M";
+
+
+    document.getElementById(
+        "route-view-max-altitude"
+    ).textContent =
+        formatNumber(
+            maxAltitude
+        ) + " M";
+
+
+    document.getElementById(
+        "route-goal-altitude"
+    ).textContent =
+        formatNumber(
+            waypoints[
+                waypoints.length - 1
+            ].altitude_meters
+        ) + " M";
+
+
+    document.getElementById(
+        "route-3d-info"
+    ).textContent =
+        `${waypoints.length} WAYPOINTS / 3D`;
 }
 
 
 /* ---------------------------------- */
-/* HELPERS                            */
+/* ANIMATION                          */
+/* ---------------------------------- */
+
+function animate3D() {
+
+    animationFrame =
+        requestAnimationFrame(
+            animate3D
+        );
+
+
+    if (controls) {
+        controls.update();
+    }
+
+
+    if (
+        renderer &&
+        scene &&
+        camera
+    ) {
+
+        renderer.render(
+            scene,
+            camera
+        );
+
+    }
+}
+
+
+/* ---------------------------------- */
+/* RESIZE                             */
+/* ---------------------------------- */
+
+function resize3DScene() {
+
+    const container =
+        document.getElementById(
+            "route-3d-view"
+        );
+
+
+    if (
+        !container ||
+        !camera ||
+        !renderer
+    ) {
+        return;
+    }
+
+
+    const width =
+        container.clientWidth;
+
+
+    const height =
+        container.clientHeight;
+
+
+    camera.aspect =
+        width / height;
+
+
+    camera.updateProjectionMatrix();
+
+
+    renderer.setSize(
+        width,
+        height
+    );
+}
+
+
+/* ---------------------------------- */
+/* HELPERS                             */
 /* ---------------------------------- */
 
 function formatNumber(value) {
 
-    if (value === null || value === undefined) {
+    if (
+        value === null ||
+        value === undefined
+    ) {
         return "—";
     }
+
 
     return Number(value).toLocaleString(
         undefined,
@@ -534,21 +1095,15 @@ function formatNumber(value) {
 }
 
 
-function formatCoordinate(value) {
-
-    if (value === null || value === undefined) {
-        return "—";
-    }
-
-    return Number(value).toFixed(6);
-
-}
-
-
 function showError(message) {
 
-    errorBox.textContent = message;
-    errorBox.classList.add("visible");
+    errorBox.textContent =
+        message;
+
+    errorBox.classList.add(
+        "visible"
+    );
+
 
     errorBox.scrollIntoView({
         behavior: "smooth",
@@ -561,7 +1116,10 @@ function showError(message) {
 function clearError() {
 
     errorBox.textContent = "";
-    errorBox.classList.remove("visible");
+
+    errorBox.classList.remove(
+        "visible"
+    );
 
 }
 
@@ -574,3 +1132,8 @@ calculateButton.addEventListener(
     "click",
     calculateRoute
 );
+
+
+/* ---------------------------------- */
+/* INITIALIZE 3D VIEW                 */
+/* ---------------------------------- */
