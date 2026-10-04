@@ -917,3 +917,20 @@ footer {
     }
 
 }
+
+.route-point-label {
+    position: absolute;
+    z-index: 10;
+    pointer-events: none;
+
+    padding: 4px 7px;
+    border: 1px solid #ffffff;
+    background: #000000;
+    color: #ffffff;
+
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+
+    display: none;
+}
