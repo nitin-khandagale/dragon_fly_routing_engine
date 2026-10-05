@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>DragonFly — 3D Routing Engine</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+    >
+
+    <link rel="stylesheet" href="/styles.css">
+</head>
+
+<body>
+
+<header class="topbar">
+    <div class="brand">
+        <span class="brand-mark">DF</span>
+        <span>DRAGONFLY</span>
+    </div>
+
+    <div class="topbar-right">
+        <span>V1.0.0</span>
+        <span class="status">
+            <span class="status-dot"></span>
+            ONLINE
+        </span>
+    </div>
+</header>
+
+
+<main>
+
+    <section class="hero">
+        <div class="eyebrow">3D ROUTING ENGINE / BUILDING AWARE</div>
+
+        <h1>
+            BUILDING-AWARE<br>
+            <span>3D ROUTING</span>
+        </h1>
+
+        <p>
+            Collision-free aerial route computation with
+            distance and energy optimization.
+        </p>
+    </section>
+
+
+    <!-- INPUT MODE -->
+    <section class="input-section">
+
+        <div class="section-header">
+            <span class="section-number">01</span>
+            <div>
+                <div class="section-title">ROUTING REQUEST</div>
+                <div class="section-subtitle">SELECT INPUT METHOD</div>
+            </div>
+        </div>
+
+
+        <div class="input-tabs">
+            <button
+                class="input-tab active"
+                data-mode="form"
+                type="button"
+            >
+                FORM INPUT
+            </button>
+
+            <button
+                class="input-tab"
+                data-mode="json"
+                type="button"
+            >
+                PASTE REQUEST JSON
+            </button>
+        </div>
+
+
+        <!-- FORM MODE -->
+        <div id="form-mode" class="input-mode active">
+
+            <div class="form-grid">
+
+                <div class="field-group">
+                    <label>START LATITUDE</label>
+                    <input
+                        id="start_lat"
+                        type="number"
+                        step="any"
+                        value="37.79448372"
+                    >
+                </div>
+
+                <div class="field-group">
+                    <label>START LONGITUDE</label>
+                    <input
+                        id="start_lon"
+                        type="number"
+                        step="any"
+                        value="-122.40547051"
+                    >
+                </div>
+
+                <div class="field-group">
+                    <label>DESTINATION LATITUDE</label>
+                    <input
+                        id="goal_lat"
+                        type="number"
+                        step="any"
+                        value="37.78695766"
+                    >
+                </div>
+
+                <div class="field-group">
+                    <label>DESTINATION LONGITUDE</label>
+                    <input
+                        id="goal_lon"
+                        type="number"
+                        step="any"
+                        value="-122.38931347"
+                    >
+                </div>
+
+                <div class="field-group">
+                    <label>START ALTITUDE / M</label>
+                    <input
+                        id="start_altitude_meters"
+                        type="number"
+                        step="any"
+                        value="0"
+                    >
+                </div>
+
+                <div class="field-group">
+                    <label>GOAL ALTITUDE / M</label>
+                    <input
+                        id="goal_altitude_meters"
+                        type="number"
+                        step="any"
+                        value="0"
+                    >
+                </div>
+
+                <div class="field-group">
+                    <label>MIN TRANSIT ALTITUDE / M</label>
+                    <input
+                        id="minimum_transit_altitude_meters"
+                        type="number"
+                        step="any"
+                        value="30"
+                    >
+                </div>
+
+                <div class="field-group">
+                    <label>MAX ALTITUDE / M</label>
+                    <input
+                        id="max_altitude_meters"
+                        type="number"
+                        step="any"
+                        value="300"
+                    >
+                </div>
+
+                <div class="field-group">
+                    <label>OBJECTIVE</label>
+                    <select id="objective">
+                        <option value="distance">DISTANCE</option>
+                        <option value="energy">ENERGY</option>
+                    </select>
+                </div>
+
+                <div class="field-group">
+                    <label>VEHICLE PROFILE</label>
+                    <select id="vehicle_profile">
+                        <option value="default_multirotor">
+                            DEFAULT MULTIROTOR
+                        </option>
+                    </select>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- JSON MODE -->
+        <div id="json-mode" class="input-mode">
+
+            <div class="json-header">
+                <div>
+                    <div class="json-title">REQUEST BODY</div>
+                    <div class="json-subtitle">
+                        JSON PAYLOAD SENT DIRECTLY TO /route
+                    </div>
+                </div>
+
+                <button
+                    id="load-example"
+                    class="text-button"
+                    type="button"
+                >
+                    LOAD EXAMPLE
+                </button>
+            </div>
+
+            <textarea
+                id="request-json"
+                spellcheck="false"
+            >{
+  "start_lat": 37.79448372,
+  "start_lon": -122.40547051,
+  "goal_lat": 37.78695766,
+  "goal_lon": -122.38931347,
+  "start_altitude_meters": 0,
+  "goal_altitude_meters": 0,
+  "minimum_transit_altitude_meters": 30,
+  "max_altitude_meters": 300,
+  "objective": "distance",
+  "vehicle_profile": "default_multirotor"
+}</textarea>
+
+        </div>
+
+
+        <div class="action-row">
+            <button id="calculate-route" class="primary-button" type="button">
+                CALCULATE ROUTE
+                <span>→</span>
+            </button>
+
+            <div id="request-status" class="request-status"></div>
+        </div>
+
+    </section>
+
+
+    <!-- RESULTS -->
+    <section id="result-section" class="result-section">
+
+        <div class="section-header">
+            <span class="section-number">02</span>
+            <div>
+                <div class="section-title">ROUTE RESULT</div>
+                <div class="section-subtitle">VALIDATED ROUTING OUTPUT</div>
+            </div>
+        </div>
+
+
+        <div class="metric-grid">
+
+            <div class="metric">
+                <span>DISTANCE</span>
+                <strong id="metric-distance">—</strong>
+                <small>METERS</small>
+            </div>
+
+            <div class="metric">
+                <span>3D DISTANCE</span>
+                <strong id="metric-3d-distance">—</strong>
+                <small>METERS</small>
+            </div>
+
+            <div class="metric">
+                <span>ENERGY</span>
+                <strong id="metric-energy">—</strong>
+                <small>WH</small>
+            </div>
+
+            <div class="metric">
+                <span>FLIGHT TIME</span>
+                <strong id="metric-flight-time">—</strong>
+                <small>SECONDS</small>
+            </div>
+
+            <div class="metric">
+                <span>BATTERY</span>
+                <strong id="metric-battery">—</strong>
+                <small>CONSUMED</small>
+            </div>
+
+            <div class="metric">
+                <span>MAX ALTITUDE</span>
+                <strong id="metric-max-altitude">—</strong>
+                <small>METERS</small>
+            </div>
+
+        </div>
+
+
+        <div class="route-meta">
+
+            <div>
+                <span>OBJECTIVE</span>
+                <strong id="result-objective">—</strong>
+            </div>
+
+            <div>
+                <span>VEHICLE</span>
+                <strong id="result-vehicle">—</strong>
+            </div>
+
+            <div>
+                <span>CLIMB</span>
+                <strong id="result-climb">—</strong>
+            </div>
+
+            <div>
+                <span>DESCENT</span>
+                <strong id="result-descent">—</strong>
+            </div>
+
+        </div>
+
+
+        <div class="visual-section">
+
+            <div class="visual-header">
+                <div>
+                    <div class="visual-title">ALTITUDE PROFILE</div>
+                    <div class="visual-subtitle">
+                        ROUTE ELEVATION / METERS
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <svg
+                    id="altitude-chart"
+                    viewBox="0 0 1000 300"
+                    preserveAspectRatio="none"
+                ></svg>
+            </div>
+
+        </div>
+
+
+        <div class="route-3d-section">
+
+    <div class="visual-header">
+        <div>
+            <div class="visual-title">3D ROUTE VIEW</div>
+            <div class="visual-subtitle">
+                INTERACTIVE FLIGHT PATH / BUILDING AWARE
+            </div>
+        </div>
+
+        <div id="route-3d-info" class="waypoint-count">
+            ROUTE READY
+        </div>
+    </div>
+
+    <div id="route-3d-view" class="route-3d-view">
+
+        <div class="route-3d-overlay">
+            <div>
+                <span>START</span>
+                <strong id="route-start-altitude">—</strong>
+            </div>
+
+            <div>
+                <span>MAX ALTITUDE</span>
+                <strong id="route-view-max-altitude">—</strong>
+            </div>
+
+            <div>
+                <span>DESTINATION</span>
+                <strong id="route-goal-altitude">—</strong>
+            </div>
+        </div>
+
+        <div class="route-3d-controls">
+            <span>DRAG TO ORBIT</span>
+            <span>SCROLL TO ZOOM</span>
+        </div>
+
+    </div>
+
+</div>
+
+    </section>
+
+
+    <!-- ERROR -->
+    <div id="error-box" class="error-box"></div>
+
+</main>
+
+
+<footer>
+    <div>DRAGONFLY / 3D ROUTING ENGINE</div>
+
+    <div class="footer-links">
+        <a href="/docs" target="_blank">API DOCS</a>
+        <a href="/health" target="_blank">HEALTH</a>
+    </div>
+</footer>
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+    }
+}
+</script>
+<script type="module" src="/app.js?v=4"></script>
+
+</body>
+</html>

@@ -22,8 +22,6 @@ let camera = null;
 let renderer = null;
 let controls = null;
 let routeGroup = null;
-let routeOriginPosition = null;
-let routeDestinationPosition = null;
 
 let animationFrame = null;
 
@@ -901,34 +899,6 @@ function render3DRoute(waypoints) {
             100
         );
 
-    routeOriginPosition = positions[0].clone();
-    routeDestinationPosition = positions[positions.length - 1].clone();
-
-    const endpointRadius = Math.max(
-        maxDimension * 0.012,
-        3
-    );
-
-    const endpointGeometry = new THREE.SphereGeometry(
-        endpointRadius,
-        16,
-        12
-    );
-
-    const originMarker = new THREE.Mesh(
-        endpointGeometry,
-        new THREE.MeshBasicMaterial({ color: 0x72e0a2 })
-    );
-    originMarker.position.copy(routeOriginPosition);
-    routeGroup.add(originMarker);
-
-    const destinationMarker = new THREE.Mesh(
-        endpointGeometry,
-        new THREE.MeshBasicMaterial({ color: 0xffb86b })
-    );
-    destinationMarker.position.copy(routeDestinationPosition);
-    routeGroup.add(destinationMarker);
-
     /*
      * Fit the camera to the complete route.
      * Use the bounding sphere so long routes are not
@@ -1043,9 +1013,6 @@ function animate3D() {
     }
 
 
-    updateRoutePointLabels();
-
-
     if (
         renderer &&
         scene &&
@@ -1058,38 +1025,6 @@ function animate3D() {
         );
 
     }
-}
-
-
-function updateRoutePointLabels() {
-
-    if (!camera || !renderer || !routeOriginPosition || !routeDestinationPosition) {
-        return;
-    }
-
-    const container = document.getElementById("route-3d-view");
-    const labels = [
-        ["route-origin-label", routeOriginPosition],
-        ["route-destination-label", routeDestinationPosition]
-    ];
-
-    camera.updateMatrixWorld();
-
-    labels.forEach(([id, position]) => {
-        const label = document.getElementById(id);
-        const projected = position.clone().project(camera);
-        const visible = projected.z >= -1 && projected.z <= 1;
-
-        label.style.display = visible ? "block" : "none";
-
-        if (!visible) {
-            return;
-        }
-
-        label.style.left = `${(projected.x + 1) * 0.5 * container.clientWidth}px`;
-        label.style.top = `${(1 - projected.y) * 0.5 * container.clientHeight}px`;
-        label.style.transform = "translate(-50%, -130%)";
-    });
 }
 
 
