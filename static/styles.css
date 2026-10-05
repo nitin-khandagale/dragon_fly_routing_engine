@@ -917,3 +917,54 @@ footer {
     }
 
 }
+/* DEMO NAVIGATION */
+.brand-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: inherit;
+    text-decoration: none;
+}
+
+.topnav {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-left: auto;
+    margin-right: 32px;
+}
+
+.topnav a {
+    color: inherit;
+    text-decoration: none;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    opacity: 0.55;
+    transition: opacity 0.15s ease;
+}
+
+.topnav a:hover,
+.topnav a.active {
+    opacity: 1;
+}
+
+@media (max-width: 760px) {
+    .topbar {
+        flex-wrap: wrap;
+        gap: 14px;
+    }
+
+    .topnav {
+        order: 3;
+        width: 100%;
+        margin: 0;
+        padding-top: 10px;
+        border-top: 1px solid var(--line);
+        justify-content: space-between;
+    }
+
+    .topbar-right {
+        margin-left: auto;
+    }
+}
