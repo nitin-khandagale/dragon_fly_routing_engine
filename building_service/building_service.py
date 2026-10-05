@@ -73,6 +73,9 @@ class LocalBuildingService:
         # A* revisits the same H3 cells many times.
         self._h3_metric_cache: dict[str, tuple[float, float]] = {}
 
+        # Geometry-only cache for precise H3 edge/building intersections.
+        self._edge_geometry_cache: dict[tuple[str, str], list[tuple[str, float, float, float]]] = {}
+
 
 
         # Pre-calculate buffered building footprints.
@@ -309,645 +312,112 @@ class LocalBuildingService:
 
 
 
-    def edge_is_clear(
+    def _get_edge_geometry(self, from_hex: str, to_hex: str) -> list[tuple[str, float, float, float]]:
+        """Cache building intersections for a directed horizontal H3 edge."""
+        cache_key = (from_hex, to_hex)
+        cached = self._edge_geometry_cache.get(cache_key)
+        if cached is not None:
+            return cached
 
-        self,
-
-        from_voxel: Voxel3D,
-
-        to_voxel: Voxel3D,
-
-    ) -> bool:
-
-
-
-        from_hex, from_layer = from_voxel
-
-        to_hex, to_layer = to_voxel
-
-
-
-        # ========================================================
-
-        # PURE VERTICAL MOVEMENT
-
-        # ========================================================
-
-        #
-
-        # No horizontal segment exists.
-
-        #
-
-        # The blocked-voxel model already protects the building
-
-        # column.
-
-        # ========================================================
-
-
-
-        if from_hex == to_hex:
-
-            return True
-
-
-
-
-
-        # ========================================================
-
-        # H3 CENTRES
-
-        # ========================================================
-        def h3_metric_center(hex_code: str) -> tuple[float, float]:
-            cached = self._h3_metric_cache.get(hex_code)
-            if cached is not None:
-                return cached
-
-            lat, lon = h3.cell_to_latlng(hex_code)
-            metric_xy = self._wgs84_to_metric.transform(lon, lat)
-            self._h3_metric_cache[hex_code] = metric_xy
-            return metric_xy
-
-        from_x, from_y = h3_metric_center(from_hex)
-        to_x, to_y = h3_metric_center(to_hex)
-
-
-
-
-
-
-        # ========================================================
-
-        # ALTITUDES
-
-        # ========================================================
-
-
-
-        from_altitude = (
-
-            from_layer
-
-            * self.layer_height
-
-        )
-
-
-
-        to_altitude = (
-
-            to_layer
-
-            * self.layer_height
-
-        )
-
-
-
-
-
-        # ========================================================
-
-        # CREATE HORIZONTAL FLIGHT SEGMENT
-
-        # ========================================================
-
-
-
-        line_metric = LineString(
-            [
-                (from_x, from_y),
-                (to_x, to_y),
-            ]
-        )
-
+        from_x, from_y = self._h3_metric_center(from_hex)
+        to_x, to_y = self._h3_metric_center(to_hex)
+        line_metric = LineString([(from_x, from_y), (to_x, to_y)])
         line_length = line_metric.length
 
         if line_length <= 0:
+            self._edge_geometry_cache[cache_key] = []
+            return []
 
-            return True
-
-
-
-
-
-        # ========================================================
-
-        # FIND POSSIBLE BUILDINGS
-
-        # ========================================================
-
-
-
-        candidate_indexes = list(
-
-            self.buffered_metric_gdf.sindex.query(
-
-                line_metric,
-
-                predicate="intersects",
-
-            )
-
+        candidate_indexes = self.buffered_metric_gdf.sindex.query(
+            line_metric, predicate="intersects"
         )
+        if len(candidate_indexes) == 0:
+            self._edge_geometry_cache[cache_key] = []
+            return []
 
-
-
-        if not candidate_indexes:
-
-            return True
-
-
-
-
-
-        # ========================================================
-
-        # CHECK EACH BUILDING
-
-        # ========================================================
-
-
+        intersections: list[tuple[str, float, float, float]] = []
 
         for positional_index in candidate_indexes:
-
-
-
-            building = (
-
-                self.buffered_metric_gdf.iloc[
-
-                    positional_index
-
-                ]
-
-            )
-
-
-
-            is_underground = building.get(
-
-                "is_underground",
-
-                False,
-
-            )
-
-
-
-            if (
-
-                pd.notna(is_underground)
-
-                and bool(is_underground)
-
-            ):
-
+            building = self.buffered_metric_gdf.iloc[positional_index]
+            is_underground = building.get("is_underground", False)
+            if pd.notna(is_underground) and bool(is_underground):
                 continue
 
-
-
-
-
-            footprint = building.geometry
-
-
-
-            intersection = (
-
-                line_metric.intersection(
-
-                    footprint
-
-                )
-
-            )
-
-
-
+            intersection = line_metric.intersection(building.geometry)
             if intersection.is_empty:
-
                 continue
 
-
-
-
-
-            obstacle_height = float(
-
-                building[
-
-                    "_obstacle_height"
-
-                ]
-
-            )
-
-
-
-
-
-            # ====================================================
-
-            # GET ALL INTERSECTION LINE PARTS
-
-            # ====================================================
-
-
-
+            obstacle_height = float(building["_obstacle_height"])
             intersection_lines = []
-
-
-
             intersection_points = []
 
-
-
-
-
             if intersection.geom_type == "LineString":
-
-
-
-                intersection_lines.append(
-
-                    intersection
-
-                )
-
-
-
-
-
+                intersection_lines.append(intersection)
             elif intersection.geom_type == "MultiLineString":
-
-
-
-                intersection_lines.extend(
-
-                    intersection.geoms
-
-                )
-
-
-
-
-
+                intersection_lines.extend(intersection.geoms)
             elif intersection.geom_type == "Point":
-
-
-
-                intersection_points.append(
-
-                    intersection
-
-                )
-
-
-
-
-
+                intersection_points.append(intersection)
             elif intersection.geom_type == "MultiPoint":
-
-
-
-                intersection_points.extend(
-
-                    intersection.geoms
-
-                )
-
-
-
-
-
+                intersection_points.extend(intersection.geoms)
             elif intersection.geom_type == "GeometryCollection":
-
-
-
                 for geom in intersection.geoms:
-
-
-
                     if geom.geom_type == "LineString":
-
-
-
-                        intersection_lines.append(
-
-                            geom
-
-                        )
-
-
-
+                        intersection_lines.append(geom)
                     elif geom.geom_type == "Point":
-
-
-
-                        intersection_points.append(
-
-                            geom
-
-                        )
-
-
-
-
-
-            # ====================================================
-
-            # CHECK LINE INTERSECTIONS
-
-            # ====================================================
-
-            #
-
-            # The drone altitude changes linearly from:
-
-            #
-
-            #     from_altitude -> to_altitude
-
-            #
-
-            # We calculate the altitude at both points where the
-
-            # route enters/leaves the building.
-
-            #
-
-            # The LOWER altitude is what matters.
-
-            # ====================================================
-
-
+                        intersection_points.append(geom)
 
             for intersection_line in intersection_lines:
-
-
-
-                coords = list(
-
-                    intersection_line.coords
-
-                )
-
-
-
+                coords = list(intersection_line.coords)
                 if not coords:
-
                     continue
-
-
-
-        
-
-                entry_point = Point(
-
-                    coords[0]
-
-                )
-
-
-
-                exit_point = Point(
-
-                    coords[-1]
-
-                )
-
-
-
-
-
-                entry_distance = (
-
-                    line_metric.project(
-
-                        entry_point
-
-                    )
-
-                )
-
-
-
-                exit_distance = (
-
-                    line_metric.project(
-
-                        exit_point
-
-                    )
-
-                )
-
-
-
-
-
-                entry_fraction = max(
-
-                    0.0,
-
-                    min(
-
-                        1.0,
-
-                        entry_distance
-
-                        / line_length,
-
-                    ),
-
-                )
-
-
-
-                exit_fraction = max(
-
-                    0.0,
-
-                    min(
-
-                        1.0,
-
-                        exit_distance
-
-                        / line_length,
-
-                    ),
-
-                )
-
-
-
-
-
-                entry_altitude = (
-
-                    from_altitude
-
-                    +
-
-                    (
-
-                        to_altitude
-
-                        - from_altitude
-
-                    )
-
-                    * entry_fraction
-
-                )
-
-
-
-                exit_altitude = (
-
-                    from_altitude
-
-                    +
-
-                    (
-
-                        to_altitude
-
-                        - from_altitude
-
-                    )
-
-                    * exit_fraction
-
-                )
-
-
-
-
-
-                lowest_altitude = min(
-
-                    entry_altitude,
-
-                    exit_altitude,
-
-                )
-
-
-
-
-
-                # ================================================
-
-                # COLLISION
-
-                # ================================================
-
-
-
-                if lowest_altitude <= obstacle_height:
-
-
-
-                    return False
-
-
-
-
-
-            # ====================================================
-
-            # POINT TOUCH
-
-            # ====================================================
-
-            #
-
-            # Even if the line only touches the buffered building
-
-            # boundary at one point, verify clearance there.
-
-            # ====================================================
-
-
+                start_fraction = max(0.0, min(1.0, line_metric.project(Point(coords[0])) / line_length))
+                end_fraction = max(0.0, min(1.0, line_metric.project(Point(coords[-1])) / line_length))
+                intersections.append(("line", start_fraction, end_fraction, obstacle_height))
 
             for point in intersection_points:
+                fraction = max(0.0, min(1.0, line_metric.project(point) / line_length))
+                intersections.append(("point", fraction, fraction, obstacle_height))
 
+        self._edge_geometry_cache[cache_key] = intersections
+        return intersections
 
-
-                distance = (
-
-                    line_metric.project(
-
-                        point
-
-                    )
-
-                )
-
-
-
-                fraction = max(
-
-                    0.0,
-
-                    min(
-
-                        1.0,
-
-                        distance
-
-                        / line_length,
-
-                    ),
-
-                )
-
-
-
-
-
-                altitude = (
-
-                    from_altitude
-
-                    +
-
-                    (
-
-                        to_altitude
-
-                        - from_altitude
-
-                    )
-
-                    * fraction
-
-                )
-
-
-
-
-
-                if altitude <= obstacle_height:
-
-
-
-                    return False
-
-
-
-
-
-        return True
-
-
+    def _h3_metric_center(self, hex_code: str) -> tuple[float, float]:
+        cached = self._h3_metric_cache.get(hex_code)
+        if cached is not None:
+            return cached
+        lat, lon = h3.cell_to_latlng(hex_code)
+        metric_xy = self._wgs84_to_metric.transform(lon, lat)
+        self._h3_metric_cache[hex_code] = metric_xy
+        return metric_xy
 
     # ---------------------------------------------------------
+    # PRECISE EDGE COLLISION CHECKING
+    # ---------------------------------------------------------
+
+    def edge_is_clear(self, from_voxel: Voxel3D, to_voxel: Voxel3D) -> bool:
+        from_hex, from_layer = from_voxel
+        to_hex, to_layer = to_voxel
+
+        if from_hex == to_hex:
+            return True
+
+        from_altitude = from_layer * self.layer_height
+        to_altitude = to_layer * self.layer_height
+        intersections = self._get_edge_geometry(from_hex, to_hex)
+
+        for intersection_type, start_fraction, end_fraction, obstacle_height in intersections:
+            start_altitude = from_altitude + (to_altitude - from_altitude) * start_fraction
+
+            if intersection_type == "point":
+                if start_altitude <= obstacle_height:
+                    return False
+                continue
+
+            end_altitude = from_altitude + (to_altitude - from_altitude) * end_fraction
+            if min(start_altitude, end_altitude) <= obstacle_height:
+                return False
+
+        return True
 
     # FINAL ROUTE VALIDATION
 
