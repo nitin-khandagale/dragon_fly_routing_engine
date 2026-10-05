@@ -1,5 +1,6 @@
 import os
 import math
+import time
 import h3
 
 from building_service.building_service import LocalBuildingService
@@ -55,6 +56,10 @@ class RoutingEngine:
             safety_margin_meters=15.0,
             vertical_clearance_meters=15.0,
         )
+
+    @staticmethod
+    def _log_timing(label: str, started: float) -> None:
+        print(f"[DragonFly timing] {label}: {time.perf_counter() - started:.3f}s")
 
     @staticmethod
     def meters_to_layer(altitude_meters: float) -> int:
@@ -161,6 +166,8 @@ class RoutingEngine:
         return vehicle
 
     def compute_route(self, req: RouteRequest):
+
+        total_started = time.perf_counter()
 
         # ========================================================
         # 1. CONVERT ALTITUDES TO INTERNAL LAYERS
@@ -294,18 +301,21 @@ class RoutingEngine:
         # 5. LOAD BUILDING OBSTACLES
         # ========================================================
 
+        stage_started = time.perf_counter()
         blocked_voxels = (
             self.building_service.get_blocked_voxels(
                 bbox=flight_bbox,
                 resolution=self.H3_RESOLUTION,
             )
         )
+        self._log_timing(f"building obstacles ({len(blocked_voxels)} voxels)", stage_started)
 
 
         # ========================================================
         # 6. FIND SAFE H3 START CONNECTOR
         # ========================================================
 
+        stage_started = time.perf_counter()
         start_connector_voxel = (
             self.find_safe_endpoint_connector(
                 exact_lat=req.start_lat,
@@ -323,6 +333,8 @@ class RoutingEngine:
             )
         )
 
+        self._log_timing("start endpoint connector", stage_started)
+
         if start_connector_voxel is None:
 
             raise RouteComputationError(
@@ -338,6 +350,7 @@ class RoutingEngine:
         # 7. FIND SAFE H3 GOAL CONNECTOR
         # ========================================================
 
+        stage_started = time.perf_counter()
         goal_connector_voxel = (
             self.find_safe_endpoint_connector(
                 exact_lat=req.goal_lat,
@@ -354,6 +367,8 @@ class RoutingEngine:
                 ),
             )
         )
+
+        self._log_timing("goal endpoint connector", stage_started)
 
         if goal_connector_voxel is None:
 
@@ -426,11 +441,13 @@ class RoutingEngine:
             )
         }
 
+        stage_started = time.perf_counter()
         wind_costs = (
             weather_service.get_wind_penalties(
                 sample_voxels
             )
         )
+        self._log_timing(f"weather/wind ({len(sample_voxels)} samples)", stage_started)
 
 
         # ========================================================
@@ -523,10 +540,12 @@ class RoutingEngine:
         # 16. FIND TRANSIT ROUTE
         # ========================================================
 
+        stage_started = time.perf_counter()
         transit_route = engine.find_route(
             takeoff[-1],
             landing[0],
         )
+        self._log_timing("A* transit search", stage_started)
 
         if not transit_route:
 
@@ -553,11 +572,13 @@ class RoutingEngine:
         # 18. FINAL H3 EDGE VALIDATION
         # ========================================================
 
+        stage_started = time.perf_counter()
         route_is_safe, failed_edge_index = (
             self.building_service.validate_route_edges(
                 route
             )
         )
+        self._log_timing(f"final route edge validation ({len(route)} voxels)", stage_started)
 
         if not route_is_safe:
 
@@ -911,6 +932,8 @@ class RoutingEngine:
         # ========================================================
         # 23. RESPONSE
         # ========================================================
+
+        self._log_timing("TOTAL route computation", total_started)
 
         return {
             "status": "success",

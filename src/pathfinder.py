@@ -1,5 +1,6 @@
 import heapq
 import math
+import time
 from itertools import count
 
 import h3
@@ -359,6 +360,9 @@ class Pathfinder3D:
         closed = set()
 
         expansions = 0
+        edge_validation_calls = 0
+        edge_validation_seconds = 0.0
+        search_started = time.perf_counter()
 
 
         # ====================================================
@@ -380,6 +384,14 @@ class Pathfinder3D:
             # =================================================
 
             if current == goal:
+
+                print(
+                    "[DragonFly timing] A* details: "
+                    f"{time.perf_counter() - search_started:.3f}s total, "
+                    f"{expansions} expansions, "
+                    f"{edge_validation_calls} edge validations, "
+                    f"{edge_validation_seconds:.3f}s edge-validation time"
+                )
 
                 return self._reconstruct_path(
                     came_from,
@@ -460,10 +472,12 @@ class Pathfinder3D:
                     and self.edge_validator is not None
                 ):
 
-                    if not self.edge_validator(
-                        current,
-                        neighbor,
-                    ):
+                    edge_validation_calls += 1
+                    edge_started = time.perf_counter()
+                    edge_is_clear = self.edge_validator(current, neighbor)
+                    edge_validation_seconds += time.perf_counter() - edge_started
+
+                    if not edge_is_clear:
                         continue
 
 
