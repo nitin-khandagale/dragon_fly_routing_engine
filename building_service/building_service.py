@@ -661,6 +661,27 @@ class LocalBuildingService:
 
 
 
+
+
+            raw_building = self.metric_gdf.loc[
+                self.gdf.index[positional_index]
+            ]
+
+            start_x, start_y = self._wgs84_to_metric.transform(
+                from_lon,
+                from_lat,
+            )
+
+            start_point_metric = Point(start_x, start_y)
+
+            raw_distance = start_point_metric.distance(
+                raw_building.geometry
+            )
+
+            buffered_distance = start_point_metric.distance(
+                building.geometry
+            )
+
             # ----------------------------------------------------
 
             # Helper:

@@ -1,0 +1,86 @@
+[
+  {
+    "name": "building_316",
+    "request": {
+      "start_lat": 37.7903651,
+      "start_lon": -122.3984596,
+      "goal_lat": 37.7915574,
+      "goal_lon": -122.3984596,
+      "start_altitude_meters": 0,
+      "goal_altitude_meters": 0,
+      "minimum_transit_altitude_meters": 30,
+      "max_altitude_meters": 300,
+      "objective": "distance"
+    }
+  },
+  {
+    "name": "building_400",
+    "request": {
+      "start_lat": 37.7843693,
+      "start_lon": -122.3991580,
+      "goal_lat": 37.7910456,
+      "goal_lon": -122.3991580,
+      "start_altitude_meters": 0,
+      "goal_altitude_meters": 0,
+      "minimum_transit_altitude_meters": 30,
+      "max_altitude_meters": 300,
+      "objective": "distance"
+    }
+  },
+  {
+    "name": "building_373",
+    "request": {
+      "start_lat": 37.7903452,
+      "start_lon": -122.4004589,
+      "goal_lat": 37.7950309,
+      "goal_lon": -122.4004589,
+      "start_altitude_meters": 0,
+      "goal_altitude_meters": 0,
+      "minimum_transit_altitude_meters": 30,
+      "max_altitude_meters": 300,
+      "objective": "distance"
+    }
+  },
+  {
+    "name": "building_675",
+    "request": {
+      "start_lat": 37.7876239,
+      "start_lon": -122.3953496,
+      "goal_lat": 37.7909077,
+      "goal_lon": -122.3953496,
+      "start_altitude_meters": 0,
+      "goal_altitude_meters": 0,
+      "minimum_transit_altitude_meters": 30,
+      "max_altitude_meters": 300,
+      "objective": "distance"
+    }
+  },
+  {
+    "name": "building_276",
+    "request": {
+      "start_lat": 37.7881854,
+      "start_lon": -122.4027905,
+      "goal_lat": 37.7956472,
+      "goal_lon": -122.4027905,
+      "start_altitude_meters": 0,
+      "goal_altitude_meters": 0,
+      "minimum_transit_altitude_meters": 30,
+      "max_altitude_meters": 300,
+      "objective": "distance"
+    }
+  },
+  {
+    "name": "building_308",
+    "request": {
+      "start_lat": 37.7852874,
+      "start_lon": -122.3969323,
+      "goal_lat": 37.7915634,
+      "goal_lon": -122.3969323,
+      "start_altitude_meters": 0,
+      "goal_altitude_meters": 0,
+      "minimum_transit_altitude_meters": 30,
+      "max_altitude_meters": 300,
+      "objective": "distance"
+    }
+  }
+]

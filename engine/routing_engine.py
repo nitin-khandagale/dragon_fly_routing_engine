@@ -104,44 +104,148 @@ class RoutingEngine:
         return math.hypot(dx, dy)
 
     def find_safe_endpoint_connector(
-        self, exact_lat, exact_lon, altitude_layer, blocked_voxels,
+        self,
+        exact_lat,
+        exact_lon,
+        altitude_layer,
+        blocked_voxels,
         search_radius=None,
+        transit_altitude_layer=None,
     ):
-        """Find a safe H3 routing node for an exact geographic endpoint."""
+        """
+        Find a safe H3 routing node for an exact geographic endpoint.
+
+        The endpoint is connected to the routing graph at the minimum
+        safe transit altitude rather than necessarily at the endpoint's
+        original altitude.
+
+        This allows an endpoint at ground level to climb vertically first
+        and then connect horizontally to the H3 graph.
+        """
+
         if search_radius is None:
             search_radius = self.ENDPOINT_CONNECTOR_SEARCH_RADIUS
 
-        altitude_meters = altitude_layer * self.LAYER_HEIGHT_METERS
-        containing_hex = h3.latlng_to_cell(exact_lat, exact_lon, self.H3_RESOLUTION)
-        candidate_cells = h3.grid_disk(containing_hex, search_radius)
+        if transit_altitude_layer is None:
+            transit_altitude_layer = altitude_layer
+
+        # The connector altitude must be at least the endpoint altitude
+        # and at least the requested minimum transit altitude.
+        connector_altitude_layer = max(
+            altitude_layer,
+            transit_altitude_layer,
+        )
+
+        endpoint_altitude_meters = (
+            altitude_layer * self.LAYER_HEIGHT_METERS
+        )
+
+        connector_altitude_meters = (
+            connector_altitude_layer
+            * self.LAYER_HEIGHT_METERS
+        )
+
+        containing_hex = h3.latlng_to_cell(
+            exact_lat,
+            exact_lon,
+            self.H3_RESOLUTION,
+        )
+
+        # ------------------------------------------------------------
+        # 1. Validate vertical climb/descent at the exact endpoint
+        # ------------------------------------------------------------
+
+        vertical_connector_is_clear = (
+            self.building_service.coordinate_edge_is_clear(
+                from_lat=exact_lat,
+                from_lon=exact_lon,
+                from_altitude_meters=endpoint_altitude_meters,
+                to_lat=exact_lat,
+                to_lon=exact_lon,
+                to_altitude_meters=connector_altitude_meters,
+            )
+        )
+
+        if not vertical_connector_is_clear:
+            return None
+
+        # ------------------------------------------------------------
+        # 2. Search nearby H3 cells
+        # ------------------------------------------------------------
+
+        candidate_cells = h3.grid_disk(
+            containing_hex,
+            search_radius,
+        )
+
         candidates = []
 
         for hex_code in candidate_cells:
-            voxel = (hex_code, altitude_layer)
+
+            voxel = (
+                hex_code,
+                connector_altitude_layer,
+            )
+
+            # H3 voxel itself must be free.
             if voxel in blocked_voxels:
                 continue
 
-            cell_lat, cell_lon = h3.cell_to_latlng(hex_code)
-            connector_is_clear = self.building_service.coordinate_edge_is_clear(
-                from_lat=exact_lat,
-                from_lon=exact_lon,
-                from_altitude_meters=altitude_meters,
-                to_lat=cell_lat,
-                to_lon=cell_lon,
-                to_altitude_meters=altitude_meters,
+            cell_lat, cell_lon = h3.cell_to_latlng(
+                hex_code
             )
+
+            # --------------------------------------------------------
+            # 3. Validate horizontal connector at transit altitude
+            # --------------------------------------------------------
+
+            connector_is_clear = (
+                self.building_service.coordinate_edge_is_clear(
+                    from_lat=exact_lat,
+                    from_lon=exact_lon,
+                    from_altitude_meters=connector_altitude_meters,
+                    to_lat=cell_lat,
+                    to_lon=cell_lon,
+                    to_altitude_meters=connector_altitude_meters,
+                )
+            )
+
             if not connector_is_clear:
+                print(
+                    "[DEBUG ENDPOINT CANDIDATE REJECTED] "
+                    f"hex={hex_code} "
+                    f"layer={connector_altitude_layer} "
+                    f"alt={connector_altitude_meters:.1f} "
+                    f"lat={cell_lat:.7f} "
+                    f"lon={cell_lon:.7f}"
+                )
                 continue
 
+            # --------------------------------------------------------
+            # 4. Rank by horizontal distance
+            # --------------------------------------------------------
+
             distance = self.approximate_distance_meters(
-                exact_lat, exact_lon, cell_lat, cell_lon
+                exact_lat,
+                exact_lon,
+                cell_lat,
+                cell_lon,
             )
-            candidates.append((distance, voxel))
+
+            candidates.append(
+                (
+                    distance,
+                    voxel,
+                )
+            )
 
         if not candidates:
             return None
 
-        candidates.sort(key=lambda item: item[0])
+        candidates.sort(
+            key=lambda item: item[0]
+        )
+
         return candidates[0][1]
 
     def get_vehicle_profile(
@@ -320,13 +424,9 @@ class RoutingEngine:
             self.find_safe_endpoint_connector(
                 exact_lat=req.start_lat,
                 exact_lon=req.start_lon,
-
-                altitude_layer=(
-                    start_altitude_layer
-                ),
-
+                altitude_layer=start_altitude_layer,
+                transit_altitude_layer=minimum_transit_altitude_layer,
                 blocked_voxels=blocked_voxels,
-
                 search_radius=(
                     self.ENDPOINT_CONNECTOR_SEARCH_RADIUS
                 ),
@@ -355,13 +455,9 @@ class RoutingEngine:
             self.find_safe_endpoint_connector(
                 exact_lat=req.goal_lat,
                 exact_lon=req.goal_lon,
-
-                altitude_layer=(
-                    goal_altitude_layer
-                ),
-
+                altitude_layer=goal_altitude_layer,
+                transit_altitude_layer=minimum_transit_altitude_layer,
                 blocked_voxels=blocked_voxels,
-
                 search_radius=(
                     self.ENDPOINT_CONNECTOR_SEARCH_RADIUS
                 ),
@@ -393,15 +489,8 @@ class RoutingEngine:
             goal_connector_voxel[0]
         )
 
-        start_voxel = (
-            start_hex,
-            start_altitude_layer,
-        )
-
-        goal_voxel = (
-            goal_hex,
-            goal_altitude_layer,
-        )
+        start_voxel = start_connector_voxel
+        goal_voxel = goal_connector_voxel
 
 
         # ========================================================
@@ -476,37 +565,40 @@ class RoutingEngine:
 
 
         # ========================================================
-        # 13. TAKEOFF / LANDING SEGMENTS
+        # 13. ENDPOINT TAKEOFF / LANDING
         # ========================================================
 
-        takeoff = self.vertical_segment(
-            start_hex,
-            start_altitude_layer,
-            transit_start_altitude,
-        )
+        # Endpoint connectors were already validated at the safe
+        # transit altitude by find_safe_endpoint_connector().
+        #
+        # Do not model takeoff/landing as H3 vertical columns because
+        # the containing H3 cell can contain a building even when the
+        # exact requested coordinate is clear.
 
-        landing = self.vertical_segment(
-            goal_hex,
-            transit_goal_altitude,
-            goal_altitude_layer,
-        )
+        takeoff = [
+            start_connector_voxel,
+        ]
+
+        landing = [
+            goal_connector_voxel,
+        ]
 
 
         # ========================================================
         # 14. VALIDATE TAKEOFF / LANDING
         # ========================================================
 
-        self.ensure_clear(
-            takeoff,
-            blocked_voxels,
-            "Takeoff path",
-        )
+        # self.ensure_clear(
+        #     takeoff,
+        #     blocked_voxels,
+        #     "Takeoff path",
+        # )
 
-        self.ensure_clear(
-            landing,
-            blocked_voxels,
-            "Landing path",
-        )
+        # self.ensure_clear(
+        #     landing,
+        #     blocked_voxels,
+        #     "Landing path",
+        # )
 
 
         # ========================================================
@@ -541,6 +633,7 @@ class RoutingEngine:
         # ========================================================
 
         stage_started = time.perf_counter()
+
         transit_route = engine.find_route(
             takeoff[-1],
             landing[0],
@@ -561,11 +654,7 @@ class RoutingEngine:
         # 17. COMBINE H3 ROUTE
         # ========================================================
 
-        route = (
-            takeoff[:-1]
-            + transit_route
-            + landing[1:]
-        )
+        route = transit_route
 
 
         # ========================================================
@@ -657,26 +746,71 @@ class RoutingEngine:
             )
         )
 
-        exact_start_connector_safe = (
+        connector_altitude = (
+            first_route_voxel[1] * self.LAYER_HEIGHT_METERS
+        )
+
+        vertical_start_safe = (
             self.building_service.coordinate_edge_is_clear(
                 from_lat=req.start_lat,
                 from_lon=req.start_lon,
-
-                from_altitude_meters=(
-                    req.start_altitude_meters
-                ),
-
-                to_lat=first_route_lat,
-                to_lon=first_route_lon,
-
-                to_altitude_meters=(
-                    first_route_voxel[1]
-                    * self.LAYER_HEIGHT_METERS
-                ),
+                from_altitude_meters=req.start_altitude_meters,
+                to_lat=req.start_lat,
+                to_lon=req.start_lon,
+                to_altitude_meters=connector_altitude,
             )
         )
 
+        horizontal_start_safe = (
+            self.building_service.coordinate_edge_is_clear(
+                from_lat=req.start_lat,
+                from_lon=req.start_lon,
+                from_altitude_meters=connector_altitude,
+                to_lat=first_route_lat,
+                to_lon=first_route_lon,
+                to_altitude_meters=connector_altitude,
+            )
+        )
+
+        exact_start_connector_safe = (
+            vertical_start_safe and horizontal_start_safe
+        )
+
         if not exact_start_connector_safe:
+
+
+            print("\n[DEBUG FINAL START CONNECTOR]")
+
+            first_hex, first_layer = route[0]
+            first_lat, first_lon = h3.cell_to_latlng(first_hex)
+            first_altitude = first_layer * self.LAYER_HEIGHT_METERS
+
+            print(
+                f"START: "
+                f"lat={req.start_lat}, "
+                f"lon={req.start_lon}, "
+                f"alt={req.start_altitude_meters}"
+            )
+
+            print(
+                f"FIRST: "
+                f"lat={first_lat}, "
+                f"lon={first_lon}, "
+                f"alt={first_altitude}"
+            )
+
+            connector_clear = self.building_service.coordinate_edge_is_clear(
+                from_lat=req.start_lat,
+                from_lon=req.start_lon,
+                from_altitude_meters=req.start_altitude_meters,
+                to_lat=first_lat,
+                to_lon=first_lon,
+                to_altitude_meters=first_altitude,
+            )
+
+            print(f"CONNECTOR CLEAR: {connector_clear}")
+
+            print("[DEBUG FINAL START CONNECTOR END]\n")
 
             raise RouteComputationError(
                 status_code=500,
