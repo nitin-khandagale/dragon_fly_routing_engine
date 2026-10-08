@@ -968,3 +968,13 @@ footer {
         margin-left: auto;
     }
 }
+
+.result-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin: 24px 0 8px;
+}
+
+.result-actions .primary-button {
+    min-width: 180px;
+}

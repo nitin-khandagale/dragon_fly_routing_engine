@@ -795,40 +795,6 @@ class RoutingEngine:
 
         if not exact_start_connector_safe:
 
-
-            print("\n[DEBUG FINAL START CONNECTOR]")
-
-            first_hex, first_layer = route[0]
-            first_lat, first_lon = h3.cell_to_latlng(first_hex)
-            first_altitude = first_layer * self.LAYER_HEIGHT_METERS
-
-            print(
-                f"START: "
-                f"lat={req.start_lat}, "
-                f"lon={req.start_lon}, "
-                f"alt={req.start_altitude_meters}"
-            )
-
-            print(
-                f"FIRST: "
-                f"lat={first_lat}, "
-                f"lon={first_lon}, "
-                f"alt={first_altitude}"
-            )
-
-            connector_clear = self.building_service.coordinate_edge_is_clear(
-                from_lat=req.start_lat,
-                from_lon=req.start_lon,
-                from_altitude_meters=req.start_altitude_meters,
-                to_lat=first_lat,
-                to_lon=first_lon,
-                to_altitude_meters=first_altitude,
-            )
-
-            print(f"CONNECTOR CLEAR: {connector_clear}")
-
-            print("[DEBUG FINAL START CONNECTOR END]\n")
-
             raise RouteComputationError(
                 status_code=500,
                 detail=(

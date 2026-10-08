@@ -14,6 +14,9 @@ const errorBox = document.getElementById("error-box");
 
 const requestJson = document.getElementById("request-json");
 const loadExampleButton = document.getElementById("load-example");
+const downloadKmlButton = document.getElementById("download-kml");
+
+let currentRouteWaypoints = [];
 
 let currentMode = "form";
 
@@ -228,6 +231,84 @@ async function calculateRoute() {
 
 
 /* ---------------------------------- */
+/* KML DOWNLOAD                      */
+/* ---------------------------------- */
+
+function downloadRouteKml(waypoints) {
+
+    if (!waypoints || waypoints.length < 2) {
+        return;
+    }
+
+    const coordinates = waypoints
+        .map(waypoint =>
+            `${waypoint.longitude},${waypoint.latitude},${waypoint.altitude_meters}`
+        )
+        .join(" ");
+
+    const start = waypoints[0];
+    const goal = waypoints[waypoints.length - 1];
+
+    const kml = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>DragonFly 3D Route</name>
+    <Style id="routeStyle">
+      <LineStyle>
+        <color>ff00ffff</color>
+        <width>5</width>
+      </LineStyle>
+    </Style>
+    <Placemark>
+      <name>DragonFly 3D Route</name>
+      <styleUrl>#routeStyle</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <altitudeMode>absolute</altitudeMode>
+        <coordinates>${coordinates}</coordinates>
+      </LineString>
+    </Placemark>
+    <Placemark>
+      <name>Start</name>
+      <Point>
+        <altitudeMode>absolute</altitudeMode>
+        <coordinates>${start.longitude},${start.latitude},${start.altitude_meters}</coordinates>
+      </Point>
+    </Placemark>
+    <Placemark>
+      <name>Goal</name>
+      <Point>
+        <altitudeMode>absolute</altitudeMode>
+        <coordinates>${goal.longitude},${goal.latitude},${goal.altitude_meters}</coordinates>
+      </Point>
+    </Placemark>
+  </Document>
+</kml>`;
+
+    const blob = new Blob([kml], {
+        type: "application/vnd.google-earth.kml+xml"
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "dragonfly-route.kml";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    URL.revokeObjectURL(url);
+}
+
+if (downloadKmlButton) {
+    downloadKmlButton.addEventListener("click", () => {
+        downloadRouteKml(currentRouteWaypoints);
+    });
+}
+
+
+/* ---------------------------------- */
 /* RESULT                             */
 /* ---------------------------------- */
 
@@ -309,6 +390,8 @@ function renderResult(data) {
     ).textContent =
         `${data.waypoints.length} WAYPOINTS / 3D`;
 
+
+    currentRouteWaypoints = data.waypoints || [];
 
     renderChart(data.waypoints);
 
