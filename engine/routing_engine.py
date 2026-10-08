@@ -111,6 +111,7 @@ class RoutingEngine:
         blocked_voxels,
         search_radius=None,
         transit_altitude_layer=None,
+        max_altitude_layer=None,
     ):
         """
         Find a safe H3 routing node for an exact geographic endpoint.
@@ -129,6 +130,14 @@ class RoutingEngine:
         if transit_altitude_layer is None:
             transit_altitude_layer = altitude_layer
 
+        minimum_connector_layer = max(
+            altitude_layer,
+            transit_altitude_layer,
+        )
+
+        if max_altitude_layer is None:
+            max_altitude_layer = minimum_connector_layer
+
         # The connector altitude must be at least the endpoint altitude
         # and at least the requested minimum transit altitude.
         connector_altitude_layer = max(
@@ -145,108 +154,114 @@ class RoutingEngine:
             * self.LAYER_HEIGHT_METERS
         )
 
+        endpoint_altitude_meters = (
+            altitude_layer * self.LAYER_HEIGHT_METERS
+        )
+
+        minimum_connector_layer = max(
+            altitude_layer,
+            transit_altitude_layer,
+        )
+
+        if max_altitude_layer is None:
+            max_altitude_layer = minimum_connector_layer
+
         containing_hex = h3.latlng_to_cell(
             exact_lat,
             exact_lon,
             self.H3_RESOLUTION,
         )
 
-        # ------------------------------------------------------------
-        # 1. Validate vertical climb/descent at the exact endpoint
-        # ------------------------------------------------------------
-
-        vertical_connector_is_clear = (
-            self.building_service.coordinate_edge_is_clear(
-                from_lat=exact_lat,
-                from_lon=exact_lon,
-                from_altitude_meters=endpoint_altitude_meters,
-                to_lat=exact_lat,
-                to_lon=exact_lon,
-                to_altitude_meters=connector_altitude_meters,
-            )
-        )
-
-        if not vertical_connector_is_clear:
-            return None
-
-        # ------------------------------------------------------------
-        # 2. Search nearby H3 cells
-        # ------------------------------------------------------------
-
         candidate_cells = h3.grid_disk(
             containing_hex,
             search_radius,
         )
 
-        candidates = []
+        for connector_altitude_layer in range(
+            minimum_connector_layer,
+            max_altitude_layer + 1,
+        ):
 
-        for hex_code in candidate_cells:
-
-            voxel = (
-                hex_code,
-                connector_altitude_layer,
-            )
-
-            # H3 voxel itself must be free.
-            if voxel in blocked_voxels:
-                continue
-
-            cell_lat, cell_lon = h3.cell_to_latlng(
-                hex_code
+            connector_altitude_meters = (
+                connector_altitude_layer
+                * self.LAYER_HEIGHT_METERS
             )
 
             # --------------------------------------------------------
-            # 3. Validate horizontal connector at transit altitude
+            # 1. Validate vertical climb/descent at exact endpoint
             # --------------------------------------------------------
 
-            connector_is_clear = (
+            vertical_connector_is_clear = (
                 self.building_service.coordinate_edge_is_clear(
                     from_lat=exact_lat,
                     from_lon=exact_lon,
-                    from_altitude_meters=connector_altitude_meters,
-                    to_lat=cell_lat,
-                    to_lon=cell_lon,
+                    from_altitude_meters=endpoint_altitude_meters,
+                    to_lat=exact_lat,
+                    to_lon=exact_lon,
                     to_altitude_meters=connector_altitude_meters,
                 )
             )
 
-            if not connector_is_clear:
-                print(
-                    "[DEBUG ENDPOINT CANDIDATE REJECTED] "
-                    f"hex={hex_code} "
-                    f"layer={connector_altitude_layer} "
-                    f"alt={connector_altitude_meters:.1f} "
-                    f"lat={cell_lat:.7f} "
-                    f"lon={cell_lon:.7f}"
-                )
+            if not vertical_connector_is_clear:
                 continue
 
+            candidates = []
+
             # --------------------------------------------------------
-            # 4. Rank by horizontal distance
+            # 2. Search nearby H3 cells at this altitude
             # --------------------------------------------------------
 
-            distance = self.approximate_distance_meters(
-                exact_lat,
-                exact_lon,
-                cell_lat,
-                cell_lon,
-            )
+            for hex_code in candidate_cells:
 
-            candidates.append(
-                (
-                    distance,
-                    voxel,
+                voxel = (
+                    hex_code,
+                    connector_altitude_layer,
                 )
-            )
 
-        if not candidates:
-            return None
+                if voxel in blocked_voxels:
+                    continue
 
-        candidates.sort(
-            key=lambda item: item[0]
-        )
+                cell_lat, cell_lon = h3.cell_to_latlng(
+                    hex_code
+                )
 
-        return candidates[0][1]
+                connector_is_clear = (
+                    self.building_service.coordinate_edge_is_clear(
+                        from_lat=exact_lat,
+                        from_lon=exact_lon,
+                        from_altitude_meters=connector_altitude_meters,
+                        to_lat=cell_lat,
+                        to_lon=cell_lon,
+                        to_altitude_meters=connector_altitude_meters,
+                    )
+                )
+
+                if not connector_is_clear:
+                    continue
+
+                distance = self.approximate_distance_meters(
+                    exact_lat,
+                    exact_lon,
+                    cell_lat,
+                    cell_lon,
+                )
+
+                candidates.append(
+                    (distance, voxel)
+                )
+
+            # --------------------------------------------------------
+            # 3. Use the lowest altitude that has a safe connector
+            # --------------------------------------------------------
+
+            if candidates:
+                candidates.sort(
+                    key=lambda item: item[0]
+                )
+
+                return candidates[0][1]
+
+        return None
 
     def get_vehicle_profile(
         self,
@@ -426,6 +441,7 @@ class RoutingEngine:
                 exact_lon=req.start_lon,
                 altitude_layer=start_altitude_layer,
                 transit_altitude_layer=minimum_transit_altitude_layer,
+                max_altitude_layer=max_altitude_layer,
                 blocked_voxels=blocked_voxels,
                 search_radius=(
                     self.ENDPOINT_CONNECTOR_SEARCH_RADIUS
@@ -457,6 +473,7 @@ class RoutingEngine:
                 exact_lon=req.goal_lon,
                 altitude_layer=goal_altitude_layer,
                 transit_altitude_layer=minimum_transit_altitude_layer,
+                max_altitude_layer=max_altitude_layer,
                 blocked_voxels=blocked_voxels,
                 search_radius=(
                     self.ENDPOINT_CONNECTOR_SEARCH_RADIUS
