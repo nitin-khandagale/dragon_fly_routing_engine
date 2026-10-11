@@ -19,6 +19,7 @@
         <nav>
             <a href="#how">HOW IT WORKS</a>
             <a href="#engine">ENGINE</a>
+            <a href="#feedback">FEEDBACK</a>
             <a href="/demo/">TRY DEMO <span class="arrow">↗</span></a>
         </nav>
     </header>
@@ -120,16 +121,131 @@
                 <a class="button button-dark" href="/demo/">OPEN ROUTING DEMO <span>↗</span></a>
             </div>
         </section>
+
+        <section class="feedback timeline-section" id="feedback">
+            <div class="node" aria-hidden="true"></div>
+            <div class="feedback-intro">
+                <div class="eyebrow">06 / FEEDBACK & ENQUIRIES</div>
+                <h2>Help us make<br><span>DragonFly better.</span></h2>
+                <p>Trying the routing engine? Share feedback on a route, report a bug, suggest a feature, or tell us what you are building.</p>
+                <div class="feedback-note"><span class="feedback-note-mark">↳</span> Early-user feedback directly shapes the next iteration.</div>
+            </div>
+
+            <form class="feedback-form" id="feedback-form">
+                <div class="form-row">
+                    <label for="feedback-name">NAME <span>OPTIONAL</span></label>
+                    <input id="feedback-name" name="name" type="text" autocomplete="name" maxlength="120" placeholder="Your name">
+                </div>
+                <div class="form-row">
+                    <label for="feedback-email">EMAIL <span>REQUIRED</span></label>
+                    <input id="feedback-email" name="email" type="email" autocomplete="email" maxlength="254" placeholder="you@example.com" required>
+                </div>
+                <div class="form-row">
+                    <label for="feedback-type">WHAT WOULD YOU LIKE TO SHARE? <span>REQUIRED</span></label>
+                    <select id="feedback-type" name="type" required>
+                        <option value="" disabled selected>Select an enquiry type</option>
+                        <option value="Route feedback">Route feedback</option>
+                        <option value="Bug report">Bug report</option>
+                        <option value="Feature request">Feature request</option>
+                        <option value="Research collaboration">Research collaboration</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label for="feedback-message">MESSAGE <span>REQUIRED</span></label>
+                    <textarea id="feedback-message" name="message" rows="4" maxlength="5000" placeholder="Tell us what worked, what didn't, or what you have in mind..." required></textarea>
+                </div>
+                <div class="form-row form-row-optional">
+                    <label for="feedback-route-id">ROUTE ID <span>OPTIONAL</span></label>
+                    <input id="feedback-route-id" name="routeId" type="text" maxlength="200" placeholder="If your feedback relates to a specific route">
+                </div>
+                <div class="form-row form-row-optional">
+                    <label for="feedback-error-details">ERROR DETAILS <span>OPTIONAL</span></label>
+                    <textarea id="feedback-error-details" name="errorDetails" rows="2" maxlength="5000" placeholder="Paste any relevant error message (please don't include secrets or API keys)."></textarea>
+                </div>
+                <button class="button button-dark feedback-submit" id="feedback-submit" type="submit">SEND FEEDBACK <span>↗</span></button>
+                <p class="feedback-status" id="feedback-status" role="status" aria-live="polite"></p>
+                <p class="feedback-privacy">Please don't include passwords, API keys, or other sensitive information.</p>
+            </form>
+        </section>
     </main>
+
+    <section class="contact-strip" id="contact" aria-label="Contact links">
+        <a class="contact-icon-link" href="mailto:nitinkhandagale3@gmail.com" aria-label="Email Nitin" title="Email">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <rect x="3.25" y="5.25" width="17.5" height="13.5" rx="1.8"></rect>
+                <path d="m4.2 7 7.8 6 7.8-6"></path>
+            </svg>
+        </a>
+        <a class="contact-icon-link" href="https://www.linkedin.com/in/nitin-khandagale" target="_blank" rel="noopener noreferrer" aria-label="Open LinkedIn profile" title="LinkedIn">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M5.2 8.7H2.7v12h2.5v-12ZM3.95 2.8a1.48 1.48 0 1 0 0 2.96 1.48 1.48 0 0 0 0-2.96ZM21.3 13.8c0-3.6-1.92-5.28-4.48-5.28-2.06 0-2.98 1.13-3.49 1.92V8.7h-2.5v12h2.5v-6.65c0-1.75.33-3.45 2.5-3.45 2.14 0 2.17 2 2.17 3.56v6.54h2.5l.8-6.9Z"></path>
+            </svg>
+        </a>
+    </section>
 
     <footer class="site-footer">
         <div>DRAGONFLY / 3D ROUTING ENGINE</div>
         <div class="footer-links">
             <a href="/demo/">DEMO</a>
+            <a href="#feedback">FEEDBACK</a>
+            <a href="#contact">CONTACT</a>
             <a href="/docs">API DOCS</a>
             <a href="/health">HEALTH</a>
         </div>
         <div>V1.0.0</div>
     </footer>
+
+    <script>
+        (() => {
+            const endpoint = "https://script.google.com/macros/s/AKfycbzZlyvj0_xrS16A_niTR3eJEnF8VTJ4Lu4sIgCsLMfc7GsuLvPrQKWZlR1vCz_u9JBLmg/exec";
+            const form = document.getElementById("feedback-form");
+            const submitButton = document.getElementById("feedback-submit");
+            const status = document.getElementById("feedback-status");
+
+            form.addEventListener("submit", async (event) => {
+                event.preventDefault();
+                if (!form.reportValidity()) return;
+
+                const data = Object.fromEntries(new FormData(form).entries());
+                data.name = (data.name || "").trim();
+                data.email = (data.email || "").trim();
+                data.message = (data.message || "").trim();
+                data.routeId = (data.routeId || "").trim();
+                data.errorDetails = (data.errorDetails || "").trim();
+
+                if (!data.email || !data.message) {
+                    status.textContent = "Please provide your email and a message.";
+                    status.className = "feedback-status is-error";
+                    return;
+                }
+
+                submitButton.disabled = true;
+                submitButton.innerHTML = 'SENDING... <span>↗</span>';
+                status.textContent = "Sending your feedback...";
+                status.className = "feedback-status is-pending";
+
+                try {
+                    // text/plain avoids a CORS preflight; Apps Script parses the raw JSON body.
+                    // no-cors makes the response opaque, so the browser cannot inspect server-side errors.
+                    await fetch(endpoint, {
+                        method: "POST",
+                        mode: "no-cors",
+                        headers: { "Content-Type": "text/plain;charset=UTF-8" },
+                        body: JSON.stringify(data)
+                    });
+                    form.reset();
+                    status.textContent = "Thanks — your feedback has been sent. If you reported an issue, include the route ID where possible.";
+                    status.className = "feedback-status is-success";
+                } catch (error) {
+                    status.textContent = "We couldn't send your feedback. Please check your connection and try again.";
+                    status.className = "feedback-status is-error";
+                } finally {
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = 'SEND FEEDBACK <span>↗</span>';
+                }
+            });
+        })();
+    </script>
 </body>
 </html>

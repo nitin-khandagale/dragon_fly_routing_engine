@@ -217,6 +217,41 @@ h1 span, h2 span { color: #8a8a8a; }
 .footer-links { display: flex; gap: 24px; }
 .site-footer a:hover { color: #000; }
 
+
+/* Feedback & enquiries */
+.feedback {
+    min-height: 760px;
+    padding-top: 130px;
+    padding-bottom: 130px;
+    align-items: start;
+}
+.feedback-intro { grid-column: 1; }
+.feedback-intro h2 { margin: 0; font-size: clamp(42px, 5vw, 70px); line-height: .98; font-weight: 600; letter-spacing: -.055em; }
+.feedback-intro h2 span { color: #8a8a8a; }
+.feedback-intro > p { margin: 28px 0 0; max-width: 420px; color: #5e5e5e; line-height: 1.65; font-size: 16px; }
+.feedback-note { margin-top: 34px; padding-top: 18px; border-top: 1px solid var(--line); max-width: 420px; color: #666; font: 10px/1.7 var(--mono); letter-spacing: .02em; }
+.feedback-note-mark { color: #111; font-size: 16px; margin-right: 8px; }
+.feedback-form { grid-column: 2; display: flex; flex-direction: column; gap: 22px; width: 100%; }
+.form-row { display: flex; flex-direction: column; gap: 9px; }
+.form-row label { font: 10px var(--mono); letter-spacing: .08em; color: #333; }
+.form-row label span { margin-left: 8px; color: #999; font-size: 9px; }
+.form-row input, .form-row select, .form-row textarea {
+    width: 100%; border: 1px solid #d8d8d8; border-radius: 0; background: #fff; color: #111;
+    padding: 13px 14px; font: 13px/1.5 var(--sans); outline: none; transition: border-color .15s, box-shadow .15s;
+}
+.form-row input, .form-row select { min-height: 46px; }
+.form-row textarea { resize: vertical; min-height: 88px; }
+.form-row input::placeholder, .form-row textarea::placeholder { color: #a0a0a0; }
+.form-row input:focus, .form-row select:focus, .form-row textarea:focus { border-color: #111; box-shadow: 0 0 0 1px #111; }
+.feedback-submit { align-self: flex-start; gap: 24px; cursor: pointer; }
+.feedback-submit:disabled { opacity: .55; cursor: wait; transform: none; }
+.feedback-status { min-height: 18px; margin: -8px 0 0; font: 11px/1.6 var(--mono); color: #555; }
+.feedback-status:empty { display: none; }
+.feedback-status.is-success { color: #216b42; }
+.feedback-status.is-error { color: #a12828; }
+.feedback-status.is-pending { color: #666; }
+.feedback-privacy { margin: -12px 0 0; color: #888; font-size: 11px; line-height: 1.5; }
+
 @media (max-width: 800px) {
     .site-header { padding: 0 20px; }
     .site-header nav a:not(:last-child) { display: none; }
@@ -229,8 +264,60 @@ h1 span, h2 span { color: #8a8a8a; }
     .hero-meta { position: static; margin-top: 70px; }
     .mini-diagram, .flow-list, .metric-grid, .code-block { margin-top: 60px; }
     .engine .section-copy, .api .section-copy { margin-left: 0; }
+    .feedback-intro, .feedback-form { margin-top: 0; }
+    .feedback-form { margin-top: 44px; }
+    .feedback-intro h2 { font-size: clamp(42px, 11vw, 64px); }
     .metric-grid { grid-template-columns: 1fr; }
     .metric-grid div:nth-child(odd) { border-right: 0; }
     .site-footer { grid-template-columns: 1fr; padding: 24px 20px; gap: 12px; }
     .site-footer > :last-child { text-align: left; }
 }
+
+/* Compact personal contact icons */
+.contact-strip {
+    border-top: 1px solid var(--line);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 18px;
+    padding: 28px 20px;
+}
+.contact-icon-link {
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #555;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    text-decoration: none;
+    transition: color .18s ease, background .18s ease, border-color .18s ease, transform .18s ease;
+}
+.contact-icon-link svg {
+    display: block;
+    width: 21px;
+    height: 21px;
+}
+.contact-icon-link:first-child svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.contact-icon-link:last-child svg { fill: currentColor; }
+.contact-icon-link:hover {
+    color: #fff;
+    background: #111;
+    border-color: #111;
+    transform: translateY(-2px);
+}
+.contact-icon-link:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 4px;
+}
+@media (max-width: 800px) {
+    .contact-strip { padding: 24px 20px; gap: 14px; }
+}
+

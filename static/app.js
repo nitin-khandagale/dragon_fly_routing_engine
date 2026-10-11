@@ -747,6 +747,25 @@ function render3DRoute(waypoints) {
 
     if (routeGroup) {
         scene.remove(routeGroup);
+        routeGroup.traverse((object) => {
+            if (object.geometry) {
+                object.geometry.dispose();
+            }
+
+            if (object.material) {
+                const materials = Array.isArray(object.material)
+                    ? object.material
+                    : [object.material];
+
+                materials.forEach((material) => {
+                    if (material.map) {
+                        material.map.dispose();
+                    }
+
+                    material.dispose();
+                });
+            }
+        });
     }
 
 
@@ -820,6 +839,41 @@ function render3DRoute(waypoints) {
             );
 
         });
+
+    const routeBounds =
+        new THREE.Box3().setFromPoints(positions);
+
+    const routeSize =
+        routeBounds.getSize(new THREE.Vector3());
+
+    const routeExtent =
+        Math.max(routeSize.x, routeSize.y, routeSize.z);
+
+    const markerRadius =
+        Math.max(4, routeExtent * 0.012);
+
+    const labelWidth =
+        Math.max(48, routeExtent * 0.08);
+
+    routeGroup.add(
+        createRouteEndpoint(
+            positions[0],
+            "ORIGIN",
+            0x63e6a5,
+            markerRadius,
+            labelWidth
+        )
+    );
+
+    routeGroup.add(
+        createRouteEndpoint(
+            positions[positions.length - 1],
+            "DESTINATION",
+            0xff9b71,
+            markerRadius,
+            labelWidth
+        )
+    );
 
 
     /* ---------------------------------- */
@@ -1076,6 +1130,54 @@ function render3DRoute(waypoints) {
         "route-3d-info"
     ).textContent =
         `${waypoints.length} WAYPOINTS / 3D`;
+}
+
+
+function createRouteEndpoint(position, label, color, markerRadius, labelWidth) {
+    const endpoint = new THREE.Group();
+    const marker = new THREE.Mesh(
+        new THREE.SphereGeometry(markerRadius, 20, 16),
+        new THREE.MeshBasicMaterial({ color })
+    );
+
+    marker.position.copy(position);
+    endpoint.add(marker);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = 512;
+    canvas.height = 128;
+
+    const context = canvas.getContext("2d");
+    context.fillStyle = "rgba(8, 8, 8, 0.92)";
+    context.fillRect(2, 2, canvas.width - 4, canvas.height - 4);
+    context.strokeStyle = `#${color.toString(16).padStart(6, "0")}`;
+    context.lineWidth = 4;
+    context.strokeRect(2, 2, canvas.width - 4, canvas.height - 4);
+    context.fillStyle = "#ffffff";
+    context.font = "600 48px Arial, sans-serif";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillText(label, canvas.width / 2, canvas.height / 2);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+
+    const labelSprite = new THREE.Sprite(
+        new THREE.SpriteMaterial({
+            map: texture,
+            transparent: true,
+            depthTest: false,
+            depthWrite: false
+        })
+    );
+
+    labelSprite.position.copy(position);
+    labelSprite.position.y += markerRadius * 3.5;
+    labelSprite.scale.set(labelWidth, labelWidth * 0.25, 1);
+    labelSprite.renderOrder = 10;
+    endpoint.add(labelSprite);
+
+    return endpoint;
 }
 
 
