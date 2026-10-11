@@ -978,3 +978,28 @@ footer {
 .result-actions .primary-button {
     min-width: 180px;
 }
+
+
+/* DEMO AREA / COVERAGE NOTICE */
+.coverage-notice {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin: 0 0 30px;
+    padding: 16px 18px;
+    border: 1px solid var(--border);
+    background: #0e0e0e;
+}
+
+.coverage-notice strong {
+    color: var(--white);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+}
+
+.coverage-notice span {
+    color: var(--grey-4);
+    font-size: 11px;
+    line-height: 1.7;
+}

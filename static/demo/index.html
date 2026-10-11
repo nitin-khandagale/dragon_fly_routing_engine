@@ -90,11 +90,22 @@
             </button>
         </div>
 
+        <div class="coverage-notice" role="note">
+            <strong>LIMITED DEMO COVERAGE</strong>
+            <span>DragonFly currently supports routing in one small test area of San Francisco. This demo is not yet available across the entire city.</span>
+        </div>
 
         <!-- FORM MODE -->
         <div id="form-mode" class="input-mode active">
 
             <div class="form-grid">
+
+                <div class="field-group">
+                    <label for="area">AREA</label>
+                    <select id="area" name="area">
+                        <option value="san_francisco_test_area">SAN FRANCISCO — CURRENT TEST AREA</option>
+                    </select>
+                </div>
 
                 <div class="field-group">
                     <label>START LATITUDE</label>
