@@ -5,3 +5,5 @@ __pycache__/
 .git/
 .gitignore
 dragonfly_test/results/
+building_service\artifacts\sf_overture_buildings.geojson
+building_service\artifacts\sf_overture_buildings.geojson.state
